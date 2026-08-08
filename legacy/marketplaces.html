@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canais de Venda - Meus 3D</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .marketplaces-container {
+            padding: var(--space-xl) var(--space-lg);
+            max-width: 900px;
+            margin: 0 auto;
+            min-height: calc(100vh - 70px);
+        }
+
+        .marketplace-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: var(--space-md);
+            margin-top: var(--space-md);
+        }
+
+        .marketplace-item {
+            background: var(--bg-result);
+            border: 1px solid var(--border-card);
+            border-left: 4px solid var(--accent-purple);
+            border-radius: var(--radius-md);
+            padding: var(--space-lg);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-sm);
+            transition: all var(--transition-fast);
+            animation: cardSlideUp 0.4s ease-out both;
+        }
+
+        .marketplace-item:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-blue);
+            border-left-color: var(--accent-blue);
+            box-shadow: var(--shadow-card);
+        }
+
+        .marketplace-item:nth-child(3n+1) { border-left-color: var(--accent-purple); }
+        .marketplace-item:nth-child(3n+2) { border-left-color: var(--accent-cyan); }
+        .marketplace-item:nth-child(3n)   { border-left-color: var(--accent-amber); }
+
+        .marketplace-item.direct-sale {
+            border-left-color: var(--accent-green);
+            background: rgba(34, 197, 94, 0.03);
+        }
+
+        .marketplace-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .marketplace-item-name {
+            font-size: var(--fs-md);
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .marketplace-item-badge {
+            font-size: var(--fs-xs);
+            padding: 2px 10px;
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--accent-green-light);
+        }
+
+        .marketplace-item-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-sm);
+            padding-top: var(--space-sm);
+            border-top: 1px solid var(--border-card);
+        }
+
+        .marketplace-stat {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .marketplace-stat-label {
+            font-size: var(--fs-xs);
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .marketplace-stat-value {
+            font-size: var(--fs-md);
+            font-weight: 700;
+            color: var(--text-primary);
+            font-family: 'Inter', monospace;
+        }
+
+        .marketplace-item-actions {
+            display: flex;
+            gap: var(--space-xs);
+            margin-top: var(--space-xs);
+            padding-top: var(--space-sm);
+            border-top: 1px solid var(--border-card);
+        }
+
+        .marketplace-btn-edit,
+        .marketplace-btn-delete {
+            flex: 1;
+            padding: var(--space-xs) var(--space-sm);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: var(--fs-xs);
+            font-family: var(--font-family);
+            transition: all var(--transition-fast);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .marketplace-btn-edit {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .marketplace-btn-edit:hover {
+            background: var(--accent-blue);
+            color: white;
+            border-color: var(--accent-blue);
+        }
+
+        .marketplace-btn-delete {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--accent-red);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+        .marketplace-btn-delete:hover {
+            background: var(--accent-red);
+            color: white;
+        }
+
+        .marketplace-empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: var(--space-2xl);
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: var(--radius-lg);
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+        }
+
+        .marketplace-empty-state svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: var(--space-sm);
+            opacity: 0.3;
+        }
+
+        .marketplace-empty-state p {
+            font-size: var(--fs-sm);
+            margin-top: var(--space-xs);
+        }
+
+        /* Edit modal */
+        .edit-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--overlay);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .edit-overlay.active {
+            display: flex;
+        }
+        .edit-modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: var(--radius-lg);
+            padding: var(--space-xl);
+            width: 90%;
+            max-width: 450px;
+            box-shadow: var(--shadow-card-hover);
+        }
+        .edit-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-lg);
+        }
+        .edit-modal-header h3 {
+            font-size: var(--fs-lg);
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+        }
+        .edit-modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            transition: all var(--transition-fast);
+        }
+        .edit-modal-close:hover {
+            color: var(--text-primary);
+            background: var(--bg-input);
+        }
+
+        @media (max-width: 640px) {
+            .marketplaces-container {
+                padding: var(--space-md);
+            }
+            .marketplace-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="bg-orb bg-orb-1"></div>
+        <div class="bg-orb bg-orb-2"></div>
+        <div class="bg-orb bg-orb-3"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="header" id="header">
+        <div class="header-content">
+            <div class="header-left">
+                <button class="menu-toggle" id="menuToggle" aria-label="Abrir menu principal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                <div class="logo">
+                    <svg class="logo-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20 2L36 11V29L20 38L4 29V11L20 2Z" stroke="url(#logoGrad)" stroke-width="2.5" fill="none"/>
+                        <path d="M20 8L30 14V26L20 32L10 26V14L20 8Z" fill="url(#logoGrad)" opacity="0.3"/>
+                        <path d="M20 14L25 17.5V24.5L20 28L15 24.5V17.5L20 14Z" fill="url(#logoGrad)" opacity="0.6"/>
+                        <defs>
+                            <linearGradient id="logoGrad" x1="4" y1="2" x2="36" y2="38">
+                                <stop offset="0%" stop-color="#6366f1"/>
+                                <stop offset="100%" stop-color="#a855f7"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div>
+                        <h1>Canais de Venda</h1>
+                        <p class="header-subtitle">Marketplaces & Comissões</p>
+                    </div>
+                </div>
+            </div>
+            <div class="header-right">
+                <button class="btn-icon" id="themeToggle" title="Alternar tema" aria-label="Alternar tema">
+                    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                    </svg>
+                    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="marketplaces-container">
+
+        <!-- Card 1: Cadastrar Canal de Venda -->
+        <section class="card" style="margin-bottom: var(--space-lg);">
+            <div class="card-header">
+                <div class="card-icon card-icon-green">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                </div>
+                <h2>Cadastrar Canal de Venda</h2>
+            </div>
+            <div class="card-body">
+                <form id="marketplaceForm">
+                    <div class="input-group" style="margin-bottom: var(--space-md);">
+                        <label for="mpName">Nome do Canal</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="mpName" placeholder="Ex: Shopee, Mercado Livre, Elo7..." required>
+                        </div>
+                    </div>
+
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label for="mpCommission">Taxa de Comissão</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="mpCommission" placeholder="0" min="0" max="100" step="0.1" required>
+                                <span class="input-suffix">%</span>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="mpShipping">Frete Padrão</label>
+                            <div class="input-wrapper">
+                                <span class="input-prefix">R$</span>
+                                <input type="number" id="mpShipping" placeholder="0.00" min="0" step="0.01" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons" style="margin-top: var(--space-lg);">
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            Cadastrar Canal
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- Card 2: Canais Cadastrados -->
+        <section class="card">
+            <div class="card-header">
+                <div class="card-icon card-icon-purple">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                </div>
+                <h2>Canais Cadastrados</h2>
+            </div>
+            <div class="card-body">
+                <div class="marketplace-grid" id="marketplaceList">
+                    <!-- Rendered via JS -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Edit Modal -->
+    <div class="edit-overlay" id="editOverlay">
+        <div class="edit-modal">
+            <div class="edit-modal-header">
+                <h3>Editar Canal de Venda</h3>
+                <button class="edit-modal-close" id="editModalClose">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <form id="editForm">
+                <input type="hidden" id="editId">
+                <div class="input-group" style="margin-bottom: var(--space-md);">
+                    <label for="editName">Nome do Canal</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="editName" required>
+                    </div>
+                </div>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="editCommission">Taxa de Comissão</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="editCommission" min="0" max="100" step="0.1" required>
+                            <span class="input-suffix">%</span>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="editShipping">Frete Padrão</label>
+                        <div class="input-wrapper">
+                            <span class="input-prefix">R$</span>
+                            <input type="number" id="editShipping" min="0" step="0.01" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="action-buttons" style="margin-top: var(--space-lg); gap: var(--space-sm);">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                            <polyline points="7 3 7 8 15 8"></polyline>
+                        </svg>
+                        Salvar Alterações
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="editCancelBtn" style="flex: 1;">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Drawer Overlay -->
+    <div class="drawer-overlay" id="drawerOverlay"></div>
+    <div class="app-drawer" id="appDrawer">
+        <div class="drawer-header">
+            <h2>Meus 3D</h2>
+            <button class="drawer-close" id="closeDrawer" aria-label="Fechar menu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <nav class="drawer-nav">
+            <a href="index.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                </svg>
+                Calculadora (1 Peça)
+            </a>
+            <a href="kit.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                Calculadora (Kits)
+            </a>
+            <a href="filamentos.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                Cadastro de Filamentos
+            </a>
+            <a href="auxiliares.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+                Materiais Auxiliares
+            </a>
+                <a href="embalagens.html" class="drawer-nav-item">📦 Embalagens</a>
+            <a href="marketplaces.html" class="drawer-nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                Canais de Venda
+            </a>
+            <a href="producao.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg>
+                Produção &amp; Projeções
+            </a>
+            <a href="produtos.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M3 9h18M3 15h18M9 3v18M15 3v18"></path></svg>
+                Estoque de Produtos
+            </a>
+            <a href="vendas.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                Registro de Vendas
+            </a>
+            <a href="curva_abc.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M3 3v18h18"/><path d="M7 14l5-5 4 4 5-9"/>
+                </svg>
+                Curva ABC
+            </a>
+            <a href="curva_abc_filamentos.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <circle cx="12" cy="12" r="10"></circle><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                </svg>
+                Curva ABC (Filamentos)
+            </a>
+            <a href="loja.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                Página de Vendas
+            </a>
+            <a href="falhas.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                Gestão de Falhas
+            </a>
+            <a href="consignados.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                Locais Consignados
+            </a>
+            <a href="dre.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                DRE & Financeiro
+            </a>
+            <a href="maquinas.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <rect x="2" y="6" width="20" height="12" rx="2" ry="2"></rect><path d="M12 12v.01"></path><path d="M17 12v.01"></path><path d="M7 12v.01"></path>
+                </svg>
+                Máquinas &amp; Manutenção
+            </a>
+            <a href="trabalho.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M20 7h-3V4c0-1.1-.9-2-2-2H9c-1.1 0-2 .9-2 2v3H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zM9 4h6v3H9V4z"></path>
+                </svg>
+                Gestão de Trabalho
+            </a>
+        </nav>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="shared.js?v=1.3"></script>
+    <script src="script-marketplaces.js?v=1"></script>
+</body>
+</html>

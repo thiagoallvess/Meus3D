@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meus 3D – Registro de Vendas</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        .main-content { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+        /* KPIs */
+        .kpi-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .kpi-card {
+            background: var(--bg-card); border: 1px solid var(--border-card);
+            border-radius: 16px; padding: 20px;
+            display: flex; flex-direction: column; gap: 8px;
+            transition: transform 0.2s;
+        }
+        .kpi-card:hover { transform: translateY(-3px); }
+        .kpi-card-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); }
+        .kpi-card-value { font-family: 'JetBrains Mono', monospace; font-size: 26px; font-weight: 900; color: var(--text-primary); }
+        
+        .kpi-a { border-color: rgba(34, 197, 94, 0.4); }
+        .kpi-a .kpi-card-value { color: #4ade80; }
+        
+        .kpi-b { border-color: rgba(234, 179, 8, 0.4); }
+        .kpi-b .kpi-card-value { color: #facc15; }
+        
+        .kpi-c { border-color: rgba(239, 68, 68, 0.4); }
+        .kpi-c .kpi-card-value { color: #f87171; }
+
+        /* Tabela ABC */
+        .abc-panel {
+            background: var(--bg-card); border: 1px solid var(--border-card);
+            border-radius: 16px; padding: 24px;
+            overflow-x: auto;
+        }
+        .abc-panel h2 {
+            font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--text-primary);
+        }
+        
+        table { width: 100%; border-collapse: collapse; min-width: 700px; }
+        th { text-align: left; padding: 12px; font-size: 11px; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border-card); }
+        td { padding: 14px 12px; font-size: 13px; color: var(--text-primary); border-bottom: 1px solid rgba(255,255,255,0.03); }
+        tr:last-child td { border-bottom: none; }
+        
+        .col-prod { font-weight: 600; display: flex; align-items: center; gap: 10px; }
+        .col-num { text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 500; }
+        .col-center { text-align: center; }
+        
+        .badge {
+            padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 800; font-family: 'JetBrains Mono', monospace;
+        }
+        .badge-a { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
+        .badge-b { background: rgba(234, 179, 8, 0.15); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.3); }
+        .badge-c { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+        
+        .bar-wrap { width: 100px; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; display: inline-block; margin-left: 8px; vertical-align: middle; }
+        .bar-fill { height: 100%; border-radius: 3px; }
+        .bar-a { background: #4ade80; }
+        .bar-b { background: #facc15; }
+        .bar-c { background: #f87171; }
+        
+        @media (max-width: 768px) {
+            .kpi-strip { grid-template-columns: 1fr 1fr; }
+            .kpi-total { grid-column: span 2; }
+        }
+    </style>
+
+<style>
+.abc-tabs {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-left: 16px;
+}
+.abc-tab {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 8px 16px;
+    border-radius: 12px;
+    border: 1px solid var(--border-card);
+    background: var(--bg-card);
+    text-decoration: none;
+    transition: all 0.2s;
+    min-width: 140px;
+}
+.abc-tab:hover {
+    border-color: var(--accent-blue);
+    background: rgba(99, 102, 241, 0.05);
+}
+.abc-tab.active {
+    border-color: var(--accent-blue);
+    background: rgba(99, 102, 241, 0.1);
+}
+.abc-tab-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.abc-tab.active .abc-tab-title {
+    color: var(--accent-blue);
+}
+.abc-tab-subtitle {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 2px;
+}
+@media (max-width: 768px) {
+    .abc-tabs {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        margin-left: 0;
+        margin-top: 12px;
+        width: 100%;
+    }
+    .abc-tab {
+        width: 100%;
+    }
+    .header {
+        flex-wrap: wrap;
+        height: auto;
+        padding-bottom: 12px;
+    }
+}
+</style>
+</head>
+<body>
+<div class="bg-animation">
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+</div>
+
+<!-- DRAWER -->
+<div id="drawerOverlay" class="drawer-overlay"></div>
+<div class="app-drawer" id="appDrawer">
+        <div class="drawer-header">
+            <h2>Meus 3D</h2>
+            <button class="drawer-close" id="closeDrawer" aria-label="Fechar menu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <nav class="drawer-nav">
+            <a href="index.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                </svg>
+                Calculadora (1 Peça)
+            </a>
+            <a href="kit.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                Calculadora (Kits)
+            </a>
+            <a href="filamentos.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                Cadastro de Filamentos
+            </a>
+            <a href="auxiliares.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+                Materiais Auxiliares
+            </a>
+                <a href="embalagens.html" class="drawer-nav-item">📦 Embalagens</a>
+            <a href="marketplaces.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                Canais de Venda
+            </a>
+            <a href="producao.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg>
+                Produção &amp; Projeções
+            </a>
+            <a href="produtos.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M3 9h18M3 15h18M9 3v18M15 3v18"></path></svg>
+                Estoque de Produtos
+            </a>
+            <a href="vendas.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                Registro de Vendas
+            </a>
+            <a href="curva_abc.html" class="drawer-nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M3 3v18h18"/><path d="M7 14l5-5 4 4 5-9"/>
+                </svg>
+                Curva ABC
+            </a>
+            <a href="curva_abc_filamentos.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <circle cx="12" cy="12" r="10"></circle><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                </svg>
+                Curva ABC (Filamentos)
+            </a>
+            <a href="loja.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                Página de Vendas
+            </a>
+        
+                    <a href="falhas.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                Gestão de Falhas
+            </a>        
+            <a href="consignados.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                Locais Consignados
+            </a>
+            <a href="dre.html" class="drawer-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+            DRE & Financeiro
+        </a>        <a href="maquinas.html" class="drawer-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                <rect x="2" y="6" width="20" height="12" rx="2" ry="2"></rect><path d="M12 12v.01"></path><path d="M17 12v.01"></path><path d="M7 12v.01"></path>
+            </svg>
+            M&aacute;quinas &amp; Manuten&ccedil;&atilde;o
+        </a>
+            <a href="trabalho.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M20 7h-3V4c0-1.1-.9-2-2-2H9c-1.1 0-2 .9-2 2v3H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zM9 4h6v3H9V4z"></path>
+                </svg>
+                Gestão de Trabalho
+            </a>
+    </nav>
+    </div>
+
+<!-- HEADER -->
+<header class="header" id="header">
+    <div class="header-content">
+        <div class="header-left">
+            <button class="menu-toggle" id="openDrawer" aria-label="Abrir menu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
+            <div class="header-brand">
+                <h1 class="header-title">Registro de Vendas</h1>
+                <p class="header-subtitle">Histórico, análise e top produtos</p>
+            </div>
+        </div>
+        <div class="header-right">
+            <button class="btn-icon" id="themeToggle" title="Alternar tema">
+                <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            </button>
+        </div>
+    </div>
+</header>
+
+<div id="toast"></div>
+
+<main class="main-content">
+        <header class="header">
+            <button class="menu-toggle" id="menuToggle" aria-label="Abrir menu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+            
+            <div class="abc-tabs">
+                <a href="curva_abc.html" class="abc-tab active">
+                    <span class="abc-tab-title">Curva ABC</span>
+                    <span class="abc-tab-subtitle">Produtos</span>
+                </a>
+                <a href="curva_abc_filamentos.html" class="abc-tab">
+                    <span class="abc-tab-title">Curva ABC</span>
+                    <span class="abc-tab-subtitle">Filamentos</span>
+                </a>
+            </div>
+            <div style="margin-left: auto;">
+                <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema">
+                    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        
+        <div style="margin-bottom: 24px; display: flex; align-items: center; gap: 12px; background: var(--bg-card); padding: 16px 20px; border-radius: 16px; border: 1px solid var(--border-card);">
+            <label for="abcCriteria" style="font-size: 13px; font-weight: 700; color: var(--text-primary);">Critério de Análise:</label>
+            <div class="input-wrapper" style="flex: 1; max-width: 300px;">
+                <select id="abcCriteria">
+                    <option value="revenue">Faturamento (Receita Bruta)</option>
+                    <option value="profit">Lucro (Margem Bruta)</option>
+                    <option value="volume">Quantidade Vendida (Volume)</option>
+                    <option value="inventory_value">Valor Retido em Estoque</option>
+                    <option value="raw_material">Consumo de Matéria Prima (Filamento)</option>
+                    <option value="turnover">Giro de Estoque</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="kpi-strip">
+            <div class="kpi-card kpi-total">
+                <span class="kpi-card-label" id="kpiLabelTotal">Faturamento Total</span>
+                <span class="kpi-card-value" id="kpiTotalRevenue">R$ 0,00</span>
+            </div>
+            <div class="kpi-card kpi-a">
+                <span class="kpi-card-label">Itens Classe A (80%)</span>
+                <span class="kpi-card-value" id="kpiCountA">0</span>
+            </div>
+            <div class="kpi-card kpi-b">
+                <span class="kpi-card-label">Itens Classe B (15%)</span>
+                <span class="kpi-card-value" id="kpiCountB">0</span>
+            </div>
+            <div class="kpi-card kpi-c">
+                <span class="kpi-card-label">Itens Classe C (5%)</span>
+                <span class="kpi-card-value" id="kpiCountC">0</span>
+            </div>
+        </div>
+
+        <section class="abc-panel">
+            <h2>Classificação de Produtos</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th class="col-center">Classe</th>
+                        <th class="col-num">Qtd. Vendida</th>
+                        <th class="col-num" id="thMainMetric">Receita Bruta</th>
+                        <th class="col-num">% Ref.</th>
+                        <th class="col-num">% Acumulado</th>
+                    </tr>
+                </thead>
+                <tbody id="abcTableBody">
+                    <!-- Preenchido via JS -->
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+<script>
+// --- Data Loading ---
+function loadAllProducts() {
+    const single = (JSON.parse(localStorage.getItem('savedProducts3d') || '[]')).map(p => ({ ...p, _type: 'single' }));
+    const kits   = (JSON.parse(localStorage.getItem('savedProducts3d_kit') || '[]')).map(p => ({ ...p, _type: 'kit' }));
+    return [...single, ...kits];
+}
+
+function loadStock() {
+    return JSON.parse(localStorage.getItem('meus3d_stock_v1') || '{}');
+}
+
+function loadSalesData() {
+    const raw = JSON.parse(localStorage.getItem('meus3d_sales_history') || '[]');
+    const flat = [];
+    
+    raw.forEach(order => {
+        (order.items || []).forEach(item => {
+            flat.push({
+                id: item.id,
+                name: item.name || 'Desconhecido',
+                qty: item.qty || 1,
+                price: item.price || 0,
+                channel: item.channel || 'direct',
+                costs: item.costs
+            });
+        });
+    });
+
+    try {
+        const consigVendas = JSON.parse(localStorage.getItem('meus3d_consignados_vendas_v1') || '[]');
+        const consigEstoque = JSON.parse(localStorage.getItem('meus3d_consignados_estoque_v1') || '[]');
+        
+        consigVendas.forEach(v => {
+            const invItem = consigEstoque.find(e => e.id === v.inventoryId);
+            flat.push({
+                id: invItem ? invItem.productId : null,
+                name: invItem ? (invItem.productName || 'Produto Genérico') : 'Desconhecido',
+                qty: v.qty || 1,
+                price: v.price || 0,
+                channel: 'consignado',
+                costs: null
+            });
+        });
+    } catch(e) { console.error(e); }
+
+    return flat;
+}
+
+// --- Formatters ---
+const fCurrency = (val) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const fNum = (val) => val.toLocaleString('pt-BR');
+const fPct = (val) => val.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
+const fGram = (val) => val.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + 'g';
+const fFloat = (val) => val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+// --- Core Logic ---
+let currentCriteria = 'revenue';
+
+function renderABC() {
+    const products = loadAllProducts();
+    const stock = loadStock();
+    const sales = loadSalesData();
+    
+    const pMap = {};
+    products.forEach(p => { pMap[p.id] = p; });
+    
+    // Aggregation Object
+    const productAgg = {};
+    
+    // 1. Initialize all products with their stock and basic info
+    products.forEach(p => {
+        const r = p.results || {};
+        let unitCost = p._type === 'single' ? (r.unitCostProduction || r.unitCost || 0) : (r.unitCostTotalFull || r.unitCost || 0);
+        let weight = r.totalWeight || r.filamentWeight || 0;
+        
+        productAgg[p.id] = {
+            id: p.id,
+            name: p.name,
+            qtySold: 0,
+            revenue: 0,
+            profit: 0,
+            stockQty: stock[p.id] || 0,
+            unitCost: unitCost,
+            weight: weight
+        };
+    });
+    
+    // 2. Process Sales
+    sales.forEach(sale => {
+        const isMkt = (sale.channel === 'marketplace');
+        let unitCost = 0;
+        
+        if (sale.costs) {
+            unitCost = isMkt ? (sale.costs.unitCostTotalFull || 0) : (sale.costs.unitCostProduction || sale.costs.unitCostTotalFull || 0);
+        } else if (sale.id && pMap[sale.id] && pMap[sale.id].results) {
+            const r = pMap[sale.id].results;
+            unitCost = isMkt ? (r.unitCostTotalFull || r.unitCost || 0) : (r.unitCostProduction || r.unitCostTotalFull || r.unitCost || 0);
+        }
+        
+        const rev = sale.price * sale.qty;
+        const cost = unitCost * sale.qty;
+        const prof = rev - cost;
+        
+        const key = sale.id || sale.name; // Fallback to name if ID missing
+        
+        if (!productAgg[key]) {
+            productAgg[key] = {
+                id: key, name: sale.name, qtySold: 0, revenue: 0, profit: 0,
+                stockQty: 0, unitCost: unitCost, weight: 0
+            };
+        }
+        
+        productAgg[key].qtySold += sale.qty;
+        productAgg[key].revenue += rev;
+        productAgg[key].profit += prof;
+    });
+    
+    // 3. Compute derived metrics and convert to array
+    const dataList = Object.values(productAgg).map(p => {
+        return {
+            ...p,
+            inventory_value: p.stockQty * p.unitCost,
+            raw_material: p.qtySold * p.weight,
+            turnover: p.qtySold / (p.stockQty + 1)
+        };
+    });
+    
+    // 4. Sort based on criteria
+    dataList.sort((a, b) => b[currentCriteria] - a[currentCriteria]);
+    
+    // 5. Calculate Total for the metric to build the curve
+    let totalMetric = 0;
+    dataList.forEach(p => { totalMetric += Math.max(0, p[currentCriteria]); }); // Prevent negative profit from messing up the curve
+    
+    // 6. UI Updates
+    let accumulated = 0;
+    let countA = 0, countB = 0, countC = 0;
+    const tbody = document.getElementById('abcTableBody');
+    tbody.innerHTML = '';
+    
+    // Setup Column Formatters
+    const colFormatters = {
+        'revenue': fCurrency,
+        'profit': fCurrency,
+        'volume': fNum,
+        'inventory_value': fCurrency,
+        'raw_material': fGram,
+        'turnover': (v) => fFloat(v) + 'x'
+    };
+    
+    const colLabels = {
+        'revenue': 'Receita Bruta',
+        'profit': 'Lucro (Margem)',
+        'volume': 'Unidades Vendidas',
+        'inventory_value': 'Valor em Estoque',
+        'raw_material': 'Filamento Consumido',
+        'turnover': 'Taxa de Giro'
+    };
+    
+    document.getElementById('thMainMetric').textContent = colLabels[currentCriteria];
+    document.getElementById('kpiLabelTotal').textContent = colLabels[currentCriteria] + ' Total';
+    
+    if (dataList.length === 0 || totalMetric === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Nenhum dado encontrado para gerar a curva ABC.</td></tr>`;
+        document.getElementById('kpiTotalRevenue').textContent = colFormatters[currentCriteria](0);
+        document.getElementById('kpiCountA').textContent = 0;
+        document.getElementById('kpiCountB').textContent = 0;
+        document.getElementById('kpiCountC').textContent = 0;
+        return;
+    }
+    
+    dataList.forEach(prod => {
+        const val = Math.max(0, prod[currentCriteria]);
+        
+        // Se a métrica for 0, e a soma total for > 0, vai ser C automático e 0%.
+        // Se a gente quiser ocultar itens com 0 absoluto (ex: zero estoque), podemos ignorá-los, mas mantê-los como C ajuda a ver a cauda longa.
+        
+        accumulated += val;
+        const pctRef = totalMetric > 0 ? (val / totalMetric) * 100 : 0;
+        const pctAcum = totalMetric > 0 ? (accumulated / totalMetric) * 100 : 0;
+        
+        let abcClass = 'C';
+        let badgeCls = 'badge-c';
+        let barCls = 'bar-c';
+        
+        if (pctAcum <= 80 || (pctAcum > 80 && countA === 0 && val > 0)) {
+            abcClass = 'A'; badgeCls = 'badge-a'; barCls = 'bar-a';
+            countA++;
+        } else if (pctAcum <= 95 || (pctAcum > 95 && countB === 0 && pctAcum < 100 && val > 0)) {
+            abcClass = 'B'; badgeCls = 'badge-b'; barCls = 'bar-b';
+            countB++;
+        } else {
+            abcClass = 'C'; badgeCls = 'badge-c'; barCls = 'bar-c';
+            countC++;
+        }
+        
+        const tr = document.createElement('tr');
+        // Only show items with actual value or at least some sales/stock to avoid cluttering with completely inactive products
+        if (val === 0 && prod.qtySold === 0 && prod.stockQty === 0) return; 
+
+        tr.innerHTML = `
+            <td class="col-prod">${prod.name}</td>
+            <td class="col-center"><span class="badge ${badgeCls}">${abcClass}</span></td>
+
+            <td class="col-num">${fNum(prod.qtySold)}</td>
+            <td class="col-num">${colFormatters[currentCriteria](val)}</td>
+            <td class="col-num">${fPct(pctRef)}<div class="bar-wrap"><div class="bar-fill ${barCls}" style="width: ${Math.min(pctRef, 100)}%;"></div></div></td>
+            <td class="col-num">${fPct(pctAcum)}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+    
+    document.getElementById('kpiTotalRevenue').textContent = colFormatters[currentCriteria](totalMetric);
+    document.getElementById('kpiCountA').textContent = countA;
+    document.getElementById('kpiCountB').textContent = countB;
+    document.getElementById('kpiCountC').textContent = countC;
+}
+
+document.getElementById('abcCriteria').addEventListener('change', (e) => {
+    currentCriteria = e.target.value;
+    renderABC();
+});
+
+/* Drawer handled by shared.js */
+
+// --- Theme ---
+
+
+const themeToggle = document.getElementById('themeToggle');
+if(themeToggle) {
+    themeToggle.addEventListener('click', () => {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        localStorage.setItem('meus3d_theme', isDark ? 'light' : 'dark');
+    });
+}
+const savedTheme = localStorage.getItem('meus3d_theme');
+if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+
+// --- Init ---
+renderABC();
+</script>
+    <script src="shared.js?v=1.4"></script>
+</body>
+</html>

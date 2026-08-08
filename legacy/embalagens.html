@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Embalagens - Meus 3D</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .main-content { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        
+        .kpi-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .kpi-card { background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 8px; }
+        .kpi-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); }
+        .kpi-value { font-family: 'JetBrains Mono', monospace; font-size: 26px; font-weight: 900; color: var(--text-primary); }
+
+        .layout-grid { display: block; }
+        
+
+        .form-panel { background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 16px; padding: 24px; position: sticky; top: 20px; }
+        .form-panel h2 { font-size: 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+        .form-group input { width: 100%; background: var(--bg-input); border: 1px solid var(--border-input); border-radius: 8px; padding: 10px 14px; color: var(--text-primary); font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; }
+        .form-group input:focus { border-color: var(--accent-blue); }
+        
+        .btn-submit { width: 100%; background: var(--accent-blue); color: #fff; border: none; border-radius: 8px; padding: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .btn-submit:hover { background: #4f46e5; }
+
+        .table-panel { background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 16px; padding: 24px; overflow-x: auto; }
+        .table-panel h2 { font-size: 16px; margin-bottom: 16px; }
+        
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th { text-align: left; padding: 12px; font-size: 11px; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border-card); }
+        td { padding: 14px 12px; font-size: 13px; color: var(--text-primary); border-bottom: 1px solid rgba(255,255,255,0.03); }
+        tr:last-child td { border-bottom: none; }
+        
+        .col-num { font-family: 'JetBrains Mono', monospace; font-weight: 500; }
+        
+        .btn-icon { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .btn-icon:hover { background: rgba(239, 68, 68, 0.2); }
+    
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s; backdrop-filter: blur(4px); }
+        .modal-overlay.active { opacity: 1; pointer-events: all; }
+        .modal-content { background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 16px; padding: 24px; width: 100%; max-width: 450px; transform: translateY(20px); transition: transform 0.3s; }
+        .modal-overlay.active .modal-content { transform: translateY(0); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h2 { font-size: 18px; display: flex; align-items: center; gap: 8px; margin: 0; }
+        .btn-close { background: none; border: none; color: var(--text-muted); cursor: pointer; transition: color 0.2s; }
+        .btn-close:hover { color: var(--text-primary); }
+        
+        .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .btn-primary { background: var(--accent-blue); color: #fff; border: none; border-radius: 8px; padding: 10px 16px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-primary:hover { background: #4f46e5; }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: var(--surface);
+            padding: 24px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 500px;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-header h3 {
+            margin: 0;
+            color: var(--text-primary);
+        }
+        .btn-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px;
+        }
+        .btn-close:hover {
+            color: var(--text-primary);
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Overlay do Drawer -->
+    <div class="drawer-overlay" id="drawerOverlay"></div>
+
+    <div class="app-drawer" id="appDrawer">
+        <div class="drawer-header">
+            <h2>Meus 3D</h2>
+            <button class="drawer-close" id="closeDrawer" aria-label="Fechar menu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <nav class="drawer-nav">
+            <a href="index.html" class="drawer-nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                </svg>
+                Calculadora (1 Peça)
+            </a>
+            <a href="kit.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                Calculadora (Kits)
+            </a>
+            <a href="filamentos.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                Cadastro de Filamentos
+            </a>
+            <a href="auxiliares.html" class="drawer-nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+                Embalagens
+            </a>
+                <a href="embalagens.html" class="drawer-nav-item">📦 Embalagens</a>
+            <a href="marketplaces.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                Canais de Venda
+            </a>
+            <a href="producao.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg>
+                Produção &amp; Projeções
+            </a>
+            <a href="produtos.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M3 9h18M3 15h18M9 3v18M15 3v18"></path></svg>
+                Estoque de Produtos
+            </a>
+            <a href="vendas.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                Registro de Vendas
+            </a>
+            <a href="curva_abc.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M3 3v18h18"/><path d="M7 14l5-5 4 4 5-9"/>
+                </svg>
+                Curva ABC
+            </a>
+            <a href="curva_abc_filamentos.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <circle cx="12" cy="12" r="10"></circle><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                </svg>
+                Curva ABC (Filamentos)
+            </a>
+            <a href="loja.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                Página de Vendas
+            </a>
+        
+                    <a href="falhas.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                Gestão de Falhas
+            </a>        
+            <a href="consignados.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                Locais Consignados
+            </a>
+            <a href="dre.html" class="drawer-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+            DRE & Financeiro
+        </a>        <a href="maquinas.html" class="drawer-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                <rect x="2" y="6" width="20" height="12" rx="2" ry="2"></rect><path d="M12 12v.01"></path><path d="M17 12v.01"></path><path d="M7 12v.01"></path>
+            </svg>
+            M&aacute;quinas &amp; Manuten&ccedil;&atilde;o
+        </a>
+            <a href="trabalho.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M20 7h-3V4c0-1.1-.9-2-2-2H9c-1.1 0-2 .9-2 2v3H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zM9 4h6v3H9V4z"></path>
+                </svg>
+                Gestão de Trabalho
+            </a>
+    </nav>
+</div>
+
+    <!-- MAIN CONTENT -->
+    <!-- Header -->
+    <header class="header" id="header">
+        <div class="header-content">
+            <div class="header-left">
+                <button class="menu-toggle" id="menuToggle" aria-label="Abrir menu principal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                <div class="logo">
+                    <svg class="logo-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20 2L36 11V29L20 38L4 29V11L20 2Z" stroke="url(#logoGrad)" stroke-width="2.5" fill="none"/>
+                        <path d="M20 8L30 14V26L20 32L10 26V14L20 8Z" fill="url(#logoGrad)" opacity="0.3"/>
+                        <path d="M20 14L25 17.5V24.5L20 28L15 24.5V17.5L20 14Z" fill="url(#logoGrad)" opacity="0.6"/>
+                        <defs>
+                            <linearGradient id="logoGrad" x1="4" y1="2" x2="36" y2="38">
+                                <stop offset="0%" stop-color="#6366f1"/>
+                                <stop offset="100%" stop-color="#a855f7"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div>
+                        <h1>Embalagens</h1>
+                        <p class="header-subtitle">Controle de Insumos</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <button class="btn-icon" id="saveAllDefaults" title="Salvar configurações padrão" aria-label="Salvar configurações padrão">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                    </svg>
+                </button>
+                <button class="btn-icon" id="themeToggle" title="Alternar tema" aria-label="Alternar tema">
+                    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                    </svg>
+                    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
+                </button>
+                <button class="btn-icon" id="historyToggle" title="Histórico" aria-label="Histórico">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    <span class="badge" id="historyBadge">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+    <main class="main-content">
+        <!-- Abas e Ações -->
+        <div class="tabs-header" style="margin-bottom: 20px;">
+            <button class="tab-btn active" data-target="tab-prontas">📦 Embalagens Montadas</button>
+            <button class="tab-btn" data-target="tab-insumos">🧩 Insumos e Materiais</button>
+        </div>
+
+        <!-- ABA 1: Embalagens Montadas -->
+        <div id="tab-prontas" class="tab-content active">
+            <div class="header-actions">
+                <h2>Seus Modelos de Embalagem</h2>
+                <button class="btn-primary" id="btnNewPack">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Nova Embalagem
+                </button>
+            </div>
+            <section class="table-panel">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome da Embalagem</th>
+                            <th>Itens Inclusos</th>
+                            <th>Custo Total</th>
+                            <th style="text-align: right; width: 60px;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="packTableBody">
+                        <!-- Preenchido via JS -->
+                    </tbody>
+                </table>
+            </section>
+        </div>
+
+        <!-- ABA 2: Insumos de Embalagem -->
+        <div id="tab-insumos" class="tab-content" style="display: none;">
+            <div class="kpi-strip">
+                <div class="kpi-card">
+                    <span class="kpi-label">Itens Únicos Cadastrados</span>
+                    <span class="kpi-value" id="kpiUnique">0</span>
+                </div>
+                <div class="kpi-card">
+                    <span class="kpi-label">Volume Total (Unidades)</span>
+                    <span class="kpi-value" id="kpiVolume">0</span>
+                </div>
+                <div class="kpi-card" style="border-color: rgba(99, 102, 241, 0.4);">
+                    <span class="kpi-label">Capital Investido Total</span>
+                    <span class="kpi-value" id="kpiInvested" style="color: #818cf8;">R$ 0,00</span>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <h2>Estoque de Insumos</h2>
+                <button class="btn-primary" id="btnNewAux">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Nova Compra (Insumo)
+                </button>
+            </div>
+
+            <section class="table-panel" style="grid-column: 1 / -1;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome do Insumo</th>
+                            <th>Qtd. Estoque</th>
+                            <th>Custo Unit. Médio</th>
+                            <th>Valor Total Retido</th>
+                            <th style="text-align: right; width: 60px;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="auxTableBody">
+                        <!-- Preenchido via JS -->
+                    </tbody>
+                </table>
+            </section>
+        </div>
+
+    <!-- Modal de Montagem de Embalagem -->
+    <div class="modal" id="packModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Montar Nova Embalagem</h3>
+                <button class="btn-close" id="btnClosePackModal">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="form-panel" style="box-shadow: none; border: none; padding: 0;">
+                <form id="packForm">
+                    <div class="input-group">
+                        <label for="packName">Nome da Embalagem (Ex: Envio Correios P, Pacote Shopee)</label>
+                        <div class="input-wrapper"><input type="text" id="packName" required></div>
+                    </div>
+
+                    <h4 style="margin: 15px 0 10px; color: var(--text-color); font-size: 0.9rem;">Itens da Embalagem</h4>
+                    <div id="packItemsContainer" style="display: flex; flex-direction: column; gap: 10px;">
+                        <!-- Linhas de insumos serão injetadas aqui -->
+                    </div>
+                    
+                    <button type="button" class="btn-secondary" id="btnAddPackItem" style="margin-top: 10px; width: 100%; justify-content: center; font-size: 0.85rem; padding: 6px;">
+                        + Adicionar Insumo
+                    </button>
+
+                    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                        <strong>Custo Total:</strong>
+                        <span id="packTotalCost" style="font-size: 1.2rem; font-weight: 600; color: #10b981;">R$ 0,00</span>
+                    </div>
+
+                    <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: 16px;">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                            <polyline points="7 3 7 8 15 8"></polyline>
+                        </svg>
+                        Salvar Embalagem
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    
+    <!-- Modal de Cadastro -->
+    <div class="modal" id="auxModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Nova Compra / Insumo</h3>
+                <button class="btn-close" id="btnCloseModal">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="form-panel" style="box-shadow: none; border: none; padding: 0;">
+                <form id="auxForm">
+                    <div class="input-group">
+                        <label for="auxName">Nome da Embalagem (Ex: Argola 25mm, Ímã 10x2mm)</label>
+                        <div class="input-wrapper"><input type="text" id="auxName" list="auxNamesList" placeholder="Digite ou selecione..." required></div>
+                        <datalist id="auxNamesList"></datalist>
+                    </div>
+
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label for="auxDate">Data da Compra</label>
+                            <div class="input-wrapper"><input type="date" id="auxDate" required></div>
+                        </div>
+                        <div class="input-group">
+                            <label for="auxQty">Quantidade Adquirida</label>
+                            <div class="input-wrapper"><input type="number" id="auxQty" placeholder="0" min="1" step="1" required></div>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="auxCost">Custo Total da Compra</label>
+                        <div class="input-wrapper">
+                            <span class="currency-prefix">R$</span>
+                            <input type="number" id="auxCost" placeholder="0.00" min="0" step="0.01" required>
+                        </div>
+                        <span class="input-hint" id="auxUnitCostPrev">Custo Unitário: R$ 0,0000 /un</span>
+                    </div>
+
+                    <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: 16px;">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                            <polyline points="7 3 7 8 15 8"></polyline>
+                        </svg>
+                        Salvar e Lançar no Estoque
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <script src="shared.js?v=1.3"></script>
+    <script src="script-embalagens.js"></script>
+</body>
+</html>

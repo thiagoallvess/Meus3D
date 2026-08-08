@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meus 3D - Estoque de Produtos</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* ── SUMMARY CARDS ───────────────── */
+        .summary-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:24px; }
+        .summary-card { background:var(--bg-card);border:1px solid var(--border-card);border-radius:12px;padding:16px 18px; }
+        .summary-label { font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:5px; }
+        .summary-value { font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:900;color:var(--text-primary); }
+        .summary-value.green  { color:#34d399; }
+        .summary-value.orange { color:#f97316; }
+        .summary-value.red    { color:#f87171; }
+
+        /* ── SEARCH / FILTER ─────────────── */
+        .toolbar { display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap; }
+        .search-wrap { position:relative;flex:1;min-width:180px; }
+        .search-wrap input { width:100%;padding:9px 14px 9px 36px;background:var(--bg-input);border:1px solid var(--border-card);border-radius:8px;color:var(--text-primary);font-size:13px;outline:none;transition:border-color .2s; }
+        .search-wrap input:focus { border-color:var(--accent-blue); }
+        .search-icon { position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-secondary); }
+
+        /* ── PRODUCT TABLE / CARDS ────────── */
+        .product-table {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 20px;
+        }
+
+        .prod-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+            position: relative;
+        }
+        .prod-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+            border-color: var(--accent-blue);
+        }
+        .prod-card.low-stock { border-color: rgba(249, 115, 22, 0.4); }
+        .prod-card.out-stock { border-color: rgba(239, 68, 68, 0.4); }
+
+        .prod-card-header {
+            padding: 20px 20px 12px 20px;
+            border-bottom: 1px solid var(--border-card);
+        }
+        .prod-name {
+            font-size: 18px; font-weight: 700; color: var(--text-primary);
+            line-height: 1.3; margin-bottom: 12px;
+        }
+        .prod-tags { display: flex; gap: 8px; align-items: center; }
+        .prod-tag {
+            font-size: 10px; font-weight: 700; letter-spacing: .06em;
+            text-transform: uppercase; padding: 4px 10px; border-radius: 6px;
+        }
+        .tag-single { background: rgba(99,102,241,.15); color: #818cf8; }
+        .tag-kit    { background: rgba(16,185,129,.15); color: #34d399; }
+        .stock-badge { font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 6px; }
+        .badge-ok    { background: rgba(16,185,129,.15); color: #34d399; }
+        .badge-low   { background: rgba(249,115,22,.15); color: #f97316; }
+        .badge-out   { background: rgba(239,68,68,.15); color: #f87171; }
+
+        .prod-card-body {
+            padding: 16px 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .prod-meta-box {
+            display: flex; flex-direction: column; gap: 4px;
+        }
+        .meta-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; }
+        .meta-value { font-size: 14px; color: var(--text-primary); font-weight: 600; }
+        .meta-value span { font-size: 11px; color: var(--text-secondary); font-weight: 400; }
+
+        .prod-card-footer {
+            padding: 16px 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-top: 1px dashed var(--border-card);
+            display: flex; flex-direction: column; gap: 12px;
+        }
+        .stock-main-row {
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .stock-display {
+            display: flex; flex-direction: column;
+        }
+        .stock-display span { font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; }
+        .stock-display strong { font-size: 24px; color: var(--text-primary); font-weight: 800; font-family: 'JetBrains Mono', monospace; line-height: 1; margin-top: 4px; }
+        
+        .stock-actions { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+
+        /* ── BUTTONS & MODALS ───────────── */
+        .btn { border:none; cursor:pointer; font-family:'DM Sans', sans-serif; border-radius:8px; transition:all 0.2s; outline:none; }
+        .btn-primary { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+        .btn-primary:hover { box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4); transform: translateY(-2px); }
+        .btn-secondary { background: rgba(255,255,255,0.05); color: #d1d5db; border: 1px solid rgba(255,255,255,0.1); }
+        .btn-secondary:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+        .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: none; }
+        
+        /* ── EMPTY ───────────────────────── */
+        .empty-state { background:var(--bg-card);border:1px dashed var(--border-card);border-radius:12px;padding:40px 20px;text-align:center;color:var(--text-secondary); }
+        .empty-state p { font-size:13px;margin-top:8px; }
+        .empty-state a { color:var(--accent-blue);text-decoration:none; }
+        
+        /* ── TOAST ──────────────────────────────────── */
+        #toast {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+            background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 10px;
+            padding: 12px 20px; font-size: 13px; font-weight: 500;
+            color: var(--text-primary); z-index: 999; transition: transform .3s ease;
+            box-shadow: 0 8px 32px rgba(0,0,0,.5);
+        }
+        #toast.show { transform: translateX(-50%) translateY(0); }
+        #toast.success { border-color: #10b981; color: #34d399; }
+        #toast.error   { border-color: #ef4444; color: #f87171; }
+        
+        /* ── PRODUCT META CHIPS ────────── */
+        .prod-card-meta {
+            display: flex; flex-wrap: wrap; gap: 8px;
+            padding: 12px 20px 0;
+        }
+        .meta-chip {
+            display: inline-flex; align-items: center; gap: 5px;
+            background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px; padding: 5px 12px;
+            font-size: 12px; color: var(--text-secondary); font-weight: 500;
+        }
+        .meta-chip-sub { color: var(--text-muted); font-size: 11px; margin-left: 2px; }
+
+        /* ── KPI BOXES ─────────────────── */
+        .prod-kpis {
+            display: grid; grid-template-columns: repeat(4,1fr);
+            gap: 0; margin: 12px 20px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px; overflow: hidden;
+        }
+        .kpi-box {
+            padding: 10px 8px; text-align: center;
+            border-right: 1px solid rgba(255,255,255,0.06);
+        }
+        .kpi-box:last-child { border-right: none; }
+        .kpi-label {
+            font-size: 9px; text-transform: uppercase; letter-spacing: .07em;
+            color: var(--text-muted); font-weight: 700; margin-bottom: 4px;
+        }
+        .kpi-val {
+            font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .kpi-neutral { color: var(--text-primary); }
+        .kpi-green   { color: #34d399; }
+        .kpi-amber   { color: #fbbf24; }
+        .kpi-red     { color: #f87171; }
+
+        /* ── WATERFALL ─────────────────── */
+        .prod-waterfall {
+            margin: 0 20px 16px;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 12px; padding: 14px 16px;
+        }
+        .wf-title {
+            font-size: 10px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: .08em; color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+        .wf-divider {
+            height: 1px; background: rgba(255,255,255,0.08);
+            margin: 8px 0;
+        }
+        .wf-profit .rv-bar-name  { color: #4ade80 !important; font-weight: 700; }
+        .wf-profit .rv-bar-val   { color: #4ade80 !important; font-weight: 700; }
+        .wf-profit .rv-bar-fill  { box-shadow: 0 0 10px rgba(34,197,94,0.4); }
+
+        /* ── TOOLBAR with toggles ────────── */
+        .prod-toolbar {
+            display: flex; flex-wrap: wrap; gap: 16px;
+            align-items: center; justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .prod-toolbar .search-wrap { flex: 1; min-width: 200px; }
+
+
+    </style>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="bg-orb bg-orb-1"></div>
+        <div class="bg-orb bg-orb-2"></div>
+        <div class="bg-orb bg-orb-3"></div>
+    </div>
+
+    <!-- DRAWER -->
+    <div id="drawerOverlay" class="drawer-overlay"></div>
+    <div class="app-drawer" id="appDrawer">
+        <div class="drawer-header">
+            <h2>Meus 3D</h2>
+            <button class="drawer-close" id="closeDrawer" aria-label="Fechar menu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <nav class="drawer-nav">
+            <a href="index.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                </svg>
+                Calculadora (1 Peça)
+            </a>
+            <a href="filamentos.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                Cadastro de Filamentos
+            </a>
+            <a href="auxiliares.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+                Materiais Auxiliares
+            </a>
+                <a href="embalagens.html" class="drawer-nav-item">📦 Embalagens</a>
+            <a href="marketplaces.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                Canais de Venda
+            </a>
+            <a href="producao.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg>
+                Produção &amp; Projeções
+            </a>
+            <a href="produtos.html" class="drawer-nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M3 9h18M3 15h18M9 3v18M15 3v18"></path></svg>
+                Estoque de Produtos
+            </a>
+            <a href="vendas.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                Registro de Vendas
+            </a>
+            <a href="curva_abc.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M3 3v18h18"/><path d="M7 14l5-5 4 4 5-9"/>
+                </svg>
+                Curva ABC
+            </a>
+            <a href="curva_abc_filamentos.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <circle cx="12" cy="12" r="10"></circle><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                </svg>
+                Curva ABC (Filamentos)
+            </a>
+            <a href="loja.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                Página de Vendas
+            </a>
+        
+                    <a href="falhas.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                Gestão de Falhas
+            </a>        
+            <a href="consignados.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                Locais Consignados
+            </a>
+            <a href="dre.html" class="drawer-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+            DRE & Financeiro
+        </a>        <a href="maquinas.html" class="drawer-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                <rect x="2" y="6" width="20" height="12" rx="2" ry="2"></rect><path d="M12 12v.01"></path><path d="M17 12v.01"></path><path d="M7 12v.01"></path>
+            </svg>
+            M&aacute;quinas &amp; Manuten&ccedil;&atilde;o
+        </a>
+            <a href="trabalho.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M20 7h-3V4c0-1.1-.9-2-2-2H9c-1.1 0-2 .9-2 2v3H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zM9 4h6v3H9V4z"></path>
+                </svg>
+                Gestão de Trabalho
+            </a>
+    </nav>
+    </div>
+
+    <!-- Header -->
+    <header class="header" id="header">
+        <div class="header-content">
+            <div class="header-left">
+                <button class="menu-toggle" id="openDrawer" aria-label="Abrir menu principal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                <div class="logo">
+                    <svg class="logo-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20 2L36 11V29L20 38L4 29V11L20 2Z" stroke="url(#logoGrad)" stroke-width="2.5" fill="none"/>
+                        <path d="M20 8L30 14V26L20 32L10 26V14L20 8Z" fill="url(#logoGrad)" opacity="0.3"/>
+                        <path d="M20 14L25 17.5V24.5L20 28L15 24.5V17.5L20 14Z" fill="url(#logoGrad)" opacity="0.6"/>
+                        <defs>
+                            <linearGradient id="logoGrad" x1="4" y1="2" x2="36" y2="38">
+                                <stop offset="0%" stop-color="#6366f1"/>
+                                <stop offset="100%" stop-color="#a855f7"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div>
+                        <h1>Estoque de Produtos</h1>
+                        <p class="header-subtitle">Controle de estoque atualizado pela produção</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <button class="btn-icon" id="themeToggle" title="Alternar tema" aria-label="Alternar tema">
+                    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                    </svg>
+                    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+<div id="toast"></div>
+<main class="main-content">
+
+    <!-- SUMMARY -->
+    <div class="summary-grid" id="summaryGrid"></div>
+
+    <!-- TOOLBAR -->
+    <div class="toolbar" style="display:flex; flex-wrap:wrap; gap:16px; align-items:center; justify-content:space-between;">
+        <div class="search-wrap" style="flex:1; min-width:200px;">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="searchInput" placeholder="Buscar produto...">
+        </div>
+        <div class="results-controls" style="margin:0; display:flex; gap:12px; flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="window.openAssembleKitModal()" style="padding: 8px 16px; font-size: 13px; display: flex; align-items: center; gap: 8px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                Montar Kit
+            </button>
+            <div class="toggle-group" id="prodViewModeToggle">
+                <button class="toggle-btn active" data-mode="unit" onclick="updateProdGlobalToggles('unit', 'view')">1 Peça/Kit</button>
+                <button class="toggle-btn" data-mode="batch" onclick="updateProdGlobalToggles('batch', 'view')">Lote (Mesa)</button>
+            </div>
+            <div class="toggle-group" id="prodSalesModeToggle" style="overflow-x: auto; white-space: nowrap; max-width: 100%;">
+                <!-- rendered by JS -->
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- PRODUCT LIST -->
+    <div class="product-table" id="productTable"></div>
+
+    <!-- PRODUCTION MODAL -->
+    <div id="productionModal" class="sidebar-overlay" style="display: none; align-items: center; justify-content: center; z-index: 2000;">
+        <div class="card" style="width: 100%; max-width: 400px; padding: 24px; position: relative; max-height: 90vh; overflow-y: auto;">
+            <button class="drawer-close" style="position: absolute; top: 16px; right: 16px;" onclick="closeProductionModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+            
+            <h2 style="font-size: 18px; margin-bottom: 8px;">Registrar Produção</h2>
+            <p id="prodModalProductName" style="color: var(--text-secondary); font-size: 14px; margin-bottom: 20px; font-weight: 500;"></p>
+
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+                <div class="input-group">
+                    <label>Quantidade de Mesas Produzidas</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="prodModalQty" value="1" min="1" oninput="updateModalUnits()">
+                    </div>
+                    <div id="prodModalTotalUnits" style="font-size: 12px; color: var(--accent-blue); margin-top: 6px; font-weight: 500;">Total: 0 unidades</div>
+                </div>
+                
+                <div id="prodModalFilamentSection" class="input-group">
+                    <label>Filamento Utilizado</label>
+                    <div class="input-wrapper">
+                        <select id="prodModalFilament" class="custom-select"></select>
+                        <div class="select-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label>Máquina (Para Payback)</label>
+                    <div class="input-wrapper">
+                        <select id="prodModalMachine" class="custom-select">
+                            <option value="">Nenhuma (Não contabilizar)</option>
+                        </select>
+                        <div class="select-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary" onclick="confirmProduction()" style="width: 100%; margin-top: 8px; padding: 12px; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Confirmar Produção
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ASSEMBLE KIT MODAL -->
+    <div id="assembleKitModal" class="sidebar-overlay" style="display: none; align-items: center; justify-content: center; z-index: 2000;">
+        <div class="card" style="width: 100%; max-width: 600px; padding: 24px; position: relative; max-height: 90vh; overflow-y: auto;">
+            <button class="drawer-close" style="position: absolute; top: 16px; right: 16px;" onclick="closeAssembleKitModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+            
+            <h2 style="font-size: 18px; margin-bottom: 8px;">Montar Novo Kit</h2>
+            <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 20px;">Crie um kit agrupando produtos individuais que você já cadastrou. Os custos serão somados automaticamente.</p>
+
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+                <div class="input-group">
+                    <label>Nome do Kit</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="kitName" placeholder="Ex: Vaso Completo (Base + Topo)">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Peças do Kit</label>
+                    <div style="background: var(--bg-input); border: 1px solid var(--border-card); border-radius: 8px; padding: 12px; max-height: 200px; overflow-y: auto;" id="kitComponentsList">
+                        <!-- Component rows go here -->
+                        <div id="kitComponentsEmpty" style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px 0;">Nenhuma peça adicionada ainda.</div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="addKitComponentRow()" style="margin-top: 8px; padding: 8px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        Adicionar Peça
+                    </button>
+                </div>
+
+                <div class="input-group">
+                    <label>Resumo dos Custos do Kit</label>
+                    <div style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; padding: 12px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+                            <span style="color: var(--text-muted);">Custo de Produção (Filamento + Energia + etc):</span>
+                            <strong id="kitSumProdCost">R$ 0,00</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+                            <span style="color: var(--text-muted);">Custo Operacional (Pós-processamento + Extra):</span>
+                            <strong id="kitSumOpCost">R$ 0,00</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 13px; margin-top: 8px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px;">
+                            <span style="color: var(--text-primary); font-weight: 600;">Custo Total Unitário:</span>
+                            <strong id="kitSumTotalCost" style="color: var(--accent-blue); font-size: 16px;">R$ 0,00</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                    <div class="input-group">
+                        <label>Preço Venda Direta</label>
+                        <div class="input-wrapper">
+                            <span class="input-prefix">R$</span>
+                            <input type="number" id="kitSalePrice" placeholder="0,00" min="0" step="0.01">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Preço Venda Marketplace</label>
+                        <div class="input-wrapper">
+                            <span class="input-prefix">R$</span>
+                            <input type="number" id="kitSalePriceMkt" placeholder="0,00" min="0" step="0.01">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                    <div class="input-group">
+                        <label>Taxa MKT (%)</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="kitPlatformFee" placeholder="0" min="0" step="0.1">
+                            <span class="input-suffix" style="padding: 0 12px; color: var(--text-muted); background: rgba(0,0,0,0.2); border-left: 1px solid var(--border-card); display: flex; align-items: center;">%</span>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Frete do Kit</label>
+                        <div class="input-wrapper">
+                            <span class="input-prefix">R$</span>
+                            <input type="number" id="kitShipping" placeholder="0,00" min="0" step="0.01">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Embalagem Kit</label>
+                        <div class="input-wrapper">
+                            <span class="input-prefix">R$</span>
+                            <input type="number" id="kitPackaging" placeholder="0,00" min="0" step="0.01">
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="saveAssembledKit()" style="width: 100%; margin-top: 8px; padding: 12px; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    Salvar Kit
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>
+</main>
+
+<script>
+    // ── Global toggle state (must be global for onclick attrs) ──
+    var currentViewMode  = 'unit';
+    var currentSalesMode = 'direct';
+
+    function updateProdGlobalToggles(mode, type) {
+        if (type === 'view') {
+            currentViewMode = mode;
+            document.querySelectorAll('#prodViewModeToggle .toggle-btn').forEach(function(b) {
+                b.classList.toggle('active', b.dataset.mode === mode);
+            });
+        } else {
+            currentSalesMode = mode;
+            document.querySelectorAll('#prodSalesModeToggle .toggle-btn').forEach(function(b) {
+                b.classList.toggle('active', b.dataset.sales === mode);
+            });
+        }
+        renderProducts(document.getElementById('searchInput').value);
+    }
+
+    function renderProdSalesModeToggles() {
+        const container = document.getElementById('prodSalesModeToggle');
+        if (!container) return;
+        const mkts = JSON.parse(localStorage.getItem('meus3d_marketplaces') || '[]');
+        let html = `<button class="toggle-btn active" data-sales="direct" onclick="updateProdGlobalToggles('direct', 'sales')">Venda Direta</button>`;
+        mkts.forEach(m => {
+            if(m.id !== 'direct') {
+                const safeName = String(m.name).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                html += `<button class="toggle-btn" data-sales="${m.id}" onclick="updateProdGlobalToggles('${m.id}', 'sales')">${safeName}</button>`;
+            }
+        });
+        container.innerHTML = html;
+        currentSalesMode = 'direct';
+    }
+
+(function () {
+
+    const STOCK_KEY   = 'meus3d_stock_v1';
+    const LOW_THRESHOLD = 5; // unidades para considerar estoque baixo
+
+    /* ── helpers ──────────────────────────────────── */
+    function escH(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    /* ── toast ─────────────────────────────────────── */
+    const toastEl = document.getElementById('toast');
+    let toastTimer;
+    function showToast(msg, type = 'success') {
+        toastEl.textContent = msg;
+        toastEl.className = 'show ' + type;
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => { toastEl.className = ''; }, 2800);
+    }
+
+    /* ── stock storage ─────────────────────────────── */
+    function loadStock()   { try { return JSON.parse(localStorage.getItem(STOCK_KEY)) || {}; } catch(e) { return {}; } }
+    function saveStock(s)  { localStorage.setItem(STOCK_KEY, JSON.stringify(s)); }
+
+    /* ── load products from calculators ────────────── */
+    function loadAllProducts() {
+        const single = (JSON.parse(localStorage.getItem('savedProducts3d') || '[]')).map(p => ({ ...p, _type: 'single' }));
+        const kits   = (JSON.parse(localStorage.getItem('savedProducts3d_kit') || '[]')).map(p => ({ ...p, _type: 'kit' }));
+        return [...single, ...kits].sort((a, b) => b.id - a.id);
+    }
+
+    /* ── render summary ──────────────────────────── */
+    function renderSummary(products, stock) {
+        const total   = products.length;
+        const inStock = products.filter(p => (stock[p.id] || 0) > LOW_THRESHOLD).length;
+        const low     = products.filter(p => { const s = stock[p.id] || 0; return s > 0 && s <= LOW_THRESHOLD; }).length;
+        const out     = products.filter(p => (stock[p.id] || 0) === 0).length;
+        const totalUnits = products.reduce((acc, p) => acc + (stock[p.id] || 0), 0);
+
+        document.getElementById('summaryGrid').innerHTML = `
+            <div class="summary-card">
+                <div class="summary-label">Total de produtos</div>
+                <div class="summary-value">${total}</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Unidades em estoque</div>
+                <div class="summary-value green">${totalUnits}</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Estoque baixo (≤${LOW_THRESHOLD})</div>
+                <div class="summary-value ${low > 0 ? 'orange' : ''}">${low}</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Sem estoque</div>
+                <div class="summary-value ${out > 0 ? 'red' : ''}">${out}</div>
+            </div>`;
+    }
+
+    /* ── render products ──────────────────────────── */
+    function renderProducts(filterText = '') {
+        window.renderProducts = renderProducts; // expose for global toggles
+        const products = loadAllProducts();
+        const stock    = loadStock();
+
+        renderSummary(products, stock);
+
+        const table = document.getElementById('productTable');
+
+        if (products.length === 0) {
+            table.innerHTML = `
+                <div class="empty-state">
+                    <div style="font-size:32px;">📦</div>
+                    <p>Nenhum produto cadastrado ainda.</p>
+                    <p style="margin-top:6px;">Salve produtos na <a href="index.html">Calculadora de Peça Única</a>.</p>
+                </div>`;
+            return;
+        }
+
+        const filtered = products.filter(p =>
+            p.name.toLowerCase().includes(filterText.toLowerCase())
+        );
+
+        if (filtered.length === 0) {
+            table.innerHTML = `<div class="empty-state"><p>Nenhum produto encontrado para "<strong>${escH(filterText)}</strong>".</p></div>`;
+            return;
+        }
+
+        table.innerHTML = filtered.map(p => {
+            const qty   = stock[p.id] || 0;
+            const timeH = p.values.printTime || 0;
+            const wG    = p.values.weight || 0;
+            
+            const qty_batch = p.values.quantity || 1;
+            const isBatch = currentViewMode === 'batch';
+            const mult = isBatch ? qty_batch : 1;
+            const isMkt = currentSalesMode !== 'direct';
+            let platPercent = 0;
+            let mktShip = 0;
+            if (isMkt) {
+                const mkts = JSON.parse(localStorage.getItem('meus3d_marketplaces') || '[]');
+                const mkt = mkts.find(m => m.id === currentSalesMode);
+                if (mkt) {
+                    platPercent = parseFloat(mkt.commissionRate) || 0;
+                    mktShip = parseFloat(mkt.defaultShipping) || 0;
+                }
+            }
+            
+            const r = p.results || {};
+            const cMat = (parseFloat(r.filamentCost) || 0) / qty_batch * mult;
+            const cEne = (parseFloat(r.energyCost) || 0) / qty_batch * mult;
+            const cMac = (parseFloat(r.machineCost) || 0) / qty_batch * mult;
+            const failRate = parseFloat(p.values.failureRate) || 0;
+            const rawPrintCost = cMat + cEne + cMac;
+            const cFail = r.totalFailureCost !== undefined ? (parseFloat(r.totalFailureCost) / qty_batch * mult) : (rawPrintCost * (failRate / 100));
+            const cAux = (parseFloat(r.auxiliaryCost) || 0) / qty_batch * mult;
+
+            
+            const cPost = (parseFloat(r.totalPostProcessing) || 0) / qty_batch * mult;
+            const cDes = (parseFloat(r.totalDesignCost) || 0) / qty_batch * mult;
+            
+            const fallbackPack = (parseFloat(p.values.packagingCost) || 0) * qty_batch;
+            const cPack = isMkt ? ((parseFloat(r.totalPackagingCost) || fallbackPack) / qty_batch * mult) : 0;
+
+            const cShip = isMkt ? (mktShip * mult) : 0;
+
+            const saleMkt = parseFloat(p.values.salePriceMarketplace) || parseFloat(p.values.salePrice) || 0;
+            const cPlat = isMkt ? (saleMkt * (platPercent / 100) * mult) : 0;
+            
+            const cExt = (parseFloat(r.totalOtherCosts) || parseFloat(p.values.otherCosts) || 0) / qty_batch * mult;
+            
+            const prodTotal = cMat + cEne + cMac + cAux + cFail;
+            const operTotal = cPack + cShip + cPost + cDes + cExt;
+            
+            const totalCostFinal = prodTotal + operTotal + cPlat;
+
+            const unitSaleDir = p.values.salePrice || p.results?.unitCost || 0;
+            const unitSaleMkt = p.values.salePriceMarketplace || p.results?.unitCost || 0;
+            const grossRev = (isMkt ? unitSaleMkt : unitSaleDir) * mult;
+            
+            const netRev = grossRev - cPlat;
+            const grossProfit = netRev - prodTotal;
+            const netProfit = grossProfit - operTotal;
+            const netMargin = grossRev > 0 ? (netProfit / grossRev) * 100 : 0;
+            const roi = totalCostFinal > 0 ? (netProfit / totalCostFinal) * 100 : 0;
+
+            const makeBar = (val, color, lbl, extraClass='') => {
+                const w = grossRev > 0 ? Math.max(0, (val / grossRev) * 100) : 0;
+                return `<div class="rv-bar-row ${extraClass}">
+                    <div class="rv-bar-name">${lbl}</div>
+                    <div class="rv-bar-track"><div class="rv-bar-fill" style="width:${w}%; background:${color}"></div></div>
+                    <div class="rv-bar-val">R$&nbsp;${val.toFixed(2).replace('.',',')}</div>
+                </div>`;
+            };
+            
+            let badgeClass = 'badge-out', badgeText = 'Sem estoque';
+            if (qty > LOW_THRESHOLD) { badgeClass = 'badge-ok'; badgeText = 'Estoque OK'; }
+            else if (qty > 0)        { badgeClass = 'badge-low'; badgeText = 'Estoque Baixo'; }
+
+            let cardClass = '';
+            if (qty === 0) cardClass = 'out-stock';
+            else if (qty <= LOW_THRESHOLD) cardClass = 'low-stock';
+
+            return `
+            <div class="prod-card ${cardClass}">
+                <div class="prod-card-header">
+                    <div class="prod-name">${escH(p.name)}</div>
+                    <div class="prod-tags">
+                        <span class="prod-tag ${(p._type === 'kit' || (p.values.piecesPerKit || 1) > 1) ? 'tag-kit' : 'tag-single'}">${(p._type === 'kit' || (p.values.piecesPerKit || 1) > 1) ? 'KIT COM ' + (p.values.piecesPerKit || 1) : 'PEÇA ÚNICA'}</span>
+                        <span class="stock-badge ${badgeClass}">${badgeText}</span>
+                    </div>
+                </div>
+
+                <div class="prod-card-meta">
+                    <div class="meta-chip">⏱ ${timeH.toFixed(1)}h</div>
+                    <div class="meta-chip">🧵 ${(wG / qty_batch * mult).toFixed(0)}g ${p.values.filamentName ? '<span class="meta-chip-sub">' + escH(p.values.filamentName) + '</span>' : ''}</div>
+                </div>
+
+                <div class="prod-kpis">
+                    <div class="kpi-box">
+                        <div class="kpi-label">Receita</div>
+                        <div class="kpi-val kpi-neutral">R$ ${grossRev.toFixed(2).replace('.',',')}</div>
+                    </div>
+                    <div class="kpi-box">
+                        <div class="kpi-label">Custo</div>
+                        <div class="kpi-val kpi-red">R$ ${totalCostFinal.toFixed(2).replace('.',',')}</div>
+                    </div>
+                    <div class="kpi-box">
+                        <div class="kpi-label">Lucro</div>
+                        <div class="kpi-val ${netProfit >= 0 ? 'kpi-green' : 'kpi-red'}">R$ ${netProfit.toFixed(2).replace('.',',')}</div>
+                    </div>
+                    <div class="kpi-box">
+                        <div class="kpi-label">Margem</div>
+                        <div class="kpi-val ${netMargin >= 20 ? 'kpi-green' : netMargin >= 10 ? 'kpi-amber' : 'kpi-red'}">${netMargin.toFixed(1).replace('.',',')}%</div>
+                    </div>
+                </div>
+
+                <div class="prod-waterfall">
+                    <div class="wf-title">Composição • ${isBatch ? 'Lote de ' + qty_batch : '1 Peça'} • ${isMkt ? 'Marketplace' : 'Venda Direta'}</div>
+                    ${makeBar(cMat, 'linear-gradient(90deg,#6366f1,#818cf8)', 'Filamento')}
+                    ${makeBar(cEne, 'linear-gradient(90deg,#06b6d4,#22d3ee)', 'Energia')}
+                    ${makeBar(cMac, 'linear-gradient(90deg,#a855f7,#c084fc)', 'Máquina')}
+                    ${makeBar(cAux, 'linear-gradient(90deg,#a3e635,#bef264)', 'Auxiliares')}
+                    ${makeBar(cFail, 'linear-gradient(90deg,#ef4444,#f87171)', 'Falhas (' + failRate + '%)')}
+                    ${makeBar(cPost, 'linear-gradient(90deg,#f97316,#fb923c)', 'Pós-proc.')}
+                    ${makeBar(cDes, 'linear-gradient(90deg,#14b8a6,#2dd4bf)', 'Design')}
+                    ${makeBar(cPack, 'linear-gradient(90deg,#f59e0b,#fbbf24)', 'Embalagem')}
+                    ${makeBar(cShip, 'linear-gradient(90deg,#3b82f6,#60a5fa)', 'Frete')}
+                    ${makeBar(cPlat, 'linear-gradient(90deg,#ec4899,#f9a8d4)', 'Plataforma')}
+                    ${makeBar(cExt, 'linear-gradient(90deg,#6b7280,#9ca3af)', 'Outros')}
+                    ${netProfit > 0 ? '<div class="wf-divider"></div>' + makeBar(netProfit, 'linear-gradient(90deg,#22c55e,#4ade80)', 'Lucro Líquido', 'wf-profit') : ''}
+                </div>
+
+                <div class="prod-card-footer">
+                    <div class="stock-main-row">
+                        <div class="stock-display">
+                            <span>Estoque Atual</span>
+                            <strong>${qty}</strong>
+                        </div>
+                        <div style="text-align: right; display: flex; flex-direction: column; justify-content: flex-end;">
+                            <span style="font-size:10px; color:var(--text-muted); text-transform:uppercase; font-weight:600; letter-spacing:0.05em;">Patrimônio</span>
+                            <span style="font-size:14px; font-weight:700; color:var(--text-primary);">${qty > 0 ? 'R$ ' + (qty * (isMkt ? unitSaleMkt : unitSaleDir)).toFixed(2).replace('.',',') : '---'}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stock-actions">
+                        <button class="btn btn-primary" onclick="openProductionModal('${p.id}')" style="padding: 10px; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            🚀 Produzido
+                        </button>
+                        <button class="btn btn-secondary" onclick="adjustStock('${p.id}', '${escH(p.name)}', -1)" title="Remover 1 (venda/perda)" style="padding: 10px; font-size: 13px; font-weight: 600; background: rgba(239,68,68,0.1); border: 1px dashed rgba(239,68,68,0.4); color: #f87171;">
+                            −1
+                        </button>
+                    </div>
+
+                    <div style="display:flex; gap:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">
+                        <button onclick="editProduct('${p.id}', '${p._type}')" style="flex:1; padding:8px; border-radius:8px; border:1px solid rgba(99,102,241,0.4); background:rgba(99,102,241,0.1); color:#818cf8; font-size:12px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all .2s;" onmouseover="this.style.background='rgba(99,102,241,0.2)'" onmouseout="this.style.background='rgba(99,102,241,0.1)'">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                            Editar
+                        </button>
+                        <button onclick="deleteProduct('${p.id}', '${p._type}', '${escH(p.name)}')" style="padding:8px 14px; border-radius:8px; border:1px solid rgba(239,68,68,0.4); background:rgba(239,68,68,0.08); color:#f87171; font-size:12px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all .2s;" onmouseover="this.style.background='rgba(239,68,68,0.18)'" onmouseout="this.style.background='rgba(239,68,68,0.08)'">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                            Excluir
+                        </button>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    /* ── adjust stock ─────────────────────────────── */
+    window.adjustStock = function(id, name, delta) {
+        const stock = loadStock();
+        const cur   = stock[id] || 0;
+        const next  = cur + delta;
+        stock[id] = next;
+        saveStock(stock);
+        renderProducts(document.getElementById('searchInput').value);
+        showToast(delta > 0 ? `+1 adicionado ao estoque de "${name}"` : `-1 removido do estoque de "${name}"`, 'success');
+    };
+
+    /* ── delete product ───────────────────────────── */
+    window.deleteProduct = function(id, type, name) {
+        if (!confirm(`Excluir "${name}"?\n\nEsta ação não pode ser desfeita.`)) return;
+        const key = type === 'kit' ? 'savedProducts3d_kit' : 'savedProducts3d';
+        const list = JSON.parse(localStorage.getItem(key) || '[]');
+        localStorage.setItem(key, JSON.stringify(list.filter(p => String(p.id) !== String(id))));
+        const stock = loadStock();
+        delete stock[id];
+        saveStock(stock);
+        renderProducts(document.getElementById('searchInput').value);
+        showToast(`"${name}" excluído com sucesso.`, 'error');
+    };
+
+    /* ── edit product (redirect to calculator) ────── */
+    window.editProduct = function(id, type) {
+        localStorage.setItem('meus3d_edit_id', id);
+        localStorage.setItem('meus3d_edit_type', type);
+        window.location.href = type === 'kit' ? 'kit.html' : 'index.html';
+    };
+
+    /* ── production modal ─────────────────────────── */ 
+    let currentProdId = null;
+    let currentProdBatchSize = 1;
+
+    window.updateModalUnits = function() {
+        const plates = parseInt(document.getElementById('prodModalQty').value) || 0;
+        const total = plates * currentProdBatchSize;
+        document.getElementById('prodModalTotalUnits').textContent = `Total: ${total} unidades (${currentProdBatchSize} por mesa)`;
+    }
+
+    window.openProductionModal = function(id) {
+        try {
+            currentProdId = id;
+            const products = loadAllProducts();
+            const p = products.find(x => String(x.id) === String(id));
+            if (!p) {
+                console.error("Product not found:", id);
+                return;
+            }
+
+            const v = p.values || {};
+            
+            document.getElementById('prodModalProductName').textContent = p.name;
+            currentProdBatchSize = (v.quantity || 1);
+            document.getElementById('kitSalePrice').value = '';
+            document.getElementById('kitSalePriceMkt').value = '';
+            document.getElementById('kitPlatformFee').value = '';
+            document.getElementById('kitShipping').value = '';
+            document.getElementById('kitPackaging').value = '';
+            document.getElementById('kitComponentsList').innerHTML = '';
+            document.getElementById('prodModalQty').value = 1;
+            updateModalUnits();
+
+            const filSelect = document.getElementById('prodModalFilament');
+            const filaments = JSON.parse(localStorage.getItem('meus3d_filaments')) || [];
+            
+            filSelect.innerHTML = '<option value="">(Nenhum - Não descontar)</option>';
+            filaments.forEach(fil => {
+                filSelect.innerHTML += `<option value="${fil.id}">${escH(fil.brand || '')} ${escH(fil.material || '')} - ${escH(fil.colorName || '')}</option>`;
+            });
+
+            // Populate machines
+            const machSelect = document.getElementById('prodModalMachine');
+            const machines = JSON.parse(localStorage.getItem('meus3d_machines_v1')) || [];
+            machSelect.innerHTML = '<option value="">Nenhuma (Não contabilizar)</option>';
+            machines.forEach(m => {
+                machSelect.innerHTML += `<option value="${m.id}">${escH(m.name || '')}</option>`;
+            });
+            if (v.machineId) {
+                machSelect.value = v.machineId;
+            }
+
+            if (v.filamentId) {
+                filSelect.value = v.filamentId;
+            } else if (v.filamentName && v.filamentName !== 'Manual') {
+                const nameToMatch = String(v.filamentName).toLowerCase();
+                const matchedFil = filaments.find(f => {
+                    const cName = f.colorName ? String(f.colorName).toLowerCase() : '';
+                    const fullName = `${f.brand || ''} ${f.material || ''} - ${cName}`.toLowerCase();
+                    return fullName.includes(nameToMatch) || (cName && nameToMatch.includes(cName));
+                });
+                if (matchedFil) {
+                    filSelect.value = matchedFil.id;
+                }
+            }
+
+            const modal = document.getElementById('productionModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                // Also add a class just in case css prevents display flex
+                modal.classList.add('visible');
+            } else {
+                console.error("productionModal not found in DOM");
+            }
+        } catch(e) {
+            console.error("Error in openProductionModal:", e);
+            alert("Erro ao abrir modal: " + e.message);
+        }
+    }
+
+    window.closeProductionModal = function() {
+        const modal = document.getElementById('productionModal');
+        if (modal) {
+            modal.style.display = 'none';
+            modal.classList.remove('visible');
+        }
+        currentProdId = null;
+    }
+
+    window.confirmProduction = function() {
+        if (!currentProdId) return;
+        const plates = parseInt(document.getElementById('prodModalQty').value) || 0;
+        if (plates <= 0) {
+            showToast('Quantidade inválida', 'error');
+            return;
+        }
+        
+        const qty = plates * currentProdBatchSize;
+
+        const products = loadAllProducts();
+        const p = products.find(x => String(x.id) === String(currentProdId));
+        if (!p) return;
+
+        const v = p.values || {};
+        const r = p.results || {};
+
+        // Add to Product Stock
+        const stock = loadStock();
+        stock[p.id] = (stock[p.id] || 0) + qty;
+        saveStock(stock);
+
+        // Deduct from Filament Stock (Grams)
+        const filId = document.getElementById('prodModalFilament').value;
+        if (filId) {
+            const filStock = JSON.parse(localStorage.getItem('meus3d_filament_stock')) || {};
+            const totalGramsNeeded = plates * (v.weight || 0);
+            filStock[filId] = Math.max(0, (filStock[filId] || 0) - totalGramsNeeded);
+            localStorage.setItem('meus3d_filament_stock', JSON.stringify(filStock));
+        }
+
+        // --- NEW: LOG PRODUCTION PAYBACK ---
+        try {
+            const mId = document.getElementById('prodModalMachine').value;
+            if (mId) {
+                const pLog = JSON.parse(localStorage.getItem('meus3d_production_payback_v1') || '[]');
+                
+                let depreciation = 0;
+                if (p.results) {
+                    const q = v.quantity || 1;
+                    depreciation = (r.machineCost || 0) / q;
+                }
+                
+                pLog.push({
+                    id: Date.now(),
+                    timestamp: new Date().toISOString(),
+                    machineId: mId,
+                    items: [{ id: p.id, name: p.name, qty: qty, depreciation: depreciation, profit: 0 }]
+                });
+                
+                localStorage.setItem('meus3d_production_payback_v1', JSON.stringify(pLog));
+            }
+        } catch(e) {
+            console.error('Error saving payback log:', e);
+        }
+
+        // --- NEW: LOG FAILURE RESERVE ---
+        try {
+            const failureLog = JSON.parse(localStorage.getItem('meus3d_failures_v1') || '[]');
+            let failureReserve = 0;
+            if (p.results) {
+                const q = v.quantity || 1;
+                
+                // Fallback for older products that don't have totalFailureCost saved
+                let totalFail = r.totalFailureCost;
+                if (totalFail === undefined) {
+                    const failRate = parseFloat(v.failureRate) || 0;
+                    const printCost = (parseFloat(r.filamentCost)||0) + (parseFloat(r.energyCost)||0) + (parseFloat(r.machineCost)||0);
+                    totalFail = printCost * (failRate / 100);
+                }
+                
+                failureReserve = (totalFail / q) * qty;
+            }
+            if (failureReserve > 0) {
+                failureLog.push({
+                    id: Date.now() + '-res', // ensure unique string
+                    timestamp: new Date().toISOString(),
+                    type: 'reserve',
+                    productId: p.id,
+                    productName: p.name,
+                    qty: qty,
+                    cost: failureReserve
+                });
+                localStorage.setItem('meus3d_failures_v1', JSON.stringify(failureLog));
+            }
+        } catch (e) {
+            console.error('Error saving failure reserve:', e);
+        }
+
+        // --- NEW: LOG LABOR TASKS ---
+        try {
+            const ppCost = parseFloat(v.postProcessing) || 0;
+            const designCost = parseFloat(v.designCost) || 0;
+            const laborUnitCost = ppCost + designCost;
+            
+            if (laborUnitCost > 0) {
+                const laborTasks = JSON.parse(localStorage.getItem('meus3d_labor_tasks_v1') || '[]');
+                laborTasks.push({
+                    id: 'L' + Date.now(),
+                    date: new Date().toISOString(),
+                    productId: p.id,
+                    productName: p.name,
+                    qty: qty,
+                    unitValue: laborUnitCost,
+                    totalValue: laborUnitCost * qty,
+                    status: 'pendente'
+                });
+                localStorage.setItem('meus3d_labor_tasks_v1', JSON.stringify(laborTasks));
+            }
+        } catch(e) {
+            console.error('Error saving labor task:', e);
+        }
+
+        showToast(`+${qty} ${p.name} produzido(s)!`);
+        closeProductionModal();
+        renderProducts(document.getElementById('searchInput').value);
+    }
+
+    /* ── set stock manual ─────────────────────────── */ 
+    window.setStock = function(id, name, val) {
+        const stock  = loadStock();
+        const next   = parseInt(val) || 0;
+        stock[id]    = next;
+        saveStock(stock);
+        renderProducts(document.getElementById('searchInput').value);
+    };
+
+    /* ── search ──────────────────────────────────── */
+    document.getElementById('searchInput').addEventListener('input', e => {
+        renderProducts(e.target.value);
+    });
+
+    /* ── listen for production updates ──────────── */
+    // When producao.html posts a message (same tab navigation or storage event)
+    window.addEventListener('storage', e => {
+        if (e.key === STOCK_KEY || e.key === 'savedProducts3d' || e.key === 'savedProducts3d_kit') {
+            renderProducts(document.getElementById('searchInput').value);
+        }
+        if (e.key === 'meus3d_production_update') {
+            // triggered by producao.html when production is confirmed
+            const update = JSON.parse(e.newValue || '{}');
+            applyProductionUpdate(update);
+        }
+    });
+
+    /* ── apply production batch ──────────────────── */
+    window.applyProductionUpdate = function(update) {
+        // update = { items: [{ id, name, qty }], timestamp }
+        if (!update || !update.items) return;
+        const stock = loadStock();
+        update.items.forEach(item => {
+            if (!item.qty || item.qty <= 0) return;
+            stock[item.id] = (stock[item.id] || 0) + item.qty;
+        });
+        saveStock(stock);
+        renderProducts(document.getElementById('searchInput').value);
+        showToast('Estoque atualizado pela produção!', 'success');
+    };
+
+    /* ── check pending production on load ────────── */
+    function checkPendingProduction() {
+        try {
+            const raw = localStorage.getItem('meus3d_production_update');
+            if (!raw) return;
+            const update = JSON.parse(raw);
+            if (update && update.items && update.items.length > 0) {
+                applyProductionUpdate(update);
+                localStorage.removeItem('meus3d_production_update');
+            }
+        } catch(e) {}
+    }
+
+    /* ── theme toggle ────────────────────────────────────── */
+    const themeToggle = document.getElementById('themeToggle');
+    const root = document.documentElement;
+    const currentTheme = localStorage.getItem('theme') || 'dark';
+    root.setAttribute('data-theme', currentTheme);
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            const newTheme = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            root.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        });
+    }
+
+    /* Drawer handled by shared.js */
+
+    /* ── init ─────────────────────────────────────── */
+    checkPendingProduction();
+    renderProdSalesModeToggles();
+    renderProducts();
+})();
+</script>
+    <script src="shared.js?v=1.3"></script>
+    <script src="script-assemble-kit.js?v=2"></script>
+</body>
+</html>

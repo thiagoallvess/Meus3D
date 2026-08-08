@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meus 3D – Registro de Vendas</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        .main-content { max-width: 1200px; }
+
+        /* ── KPI STRIP ── */
+        .kpi-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px,1fr)); gap: 14px; margin-bottom: 28px; }
+        .kpi-card {
+            background: var(--bg-card); border: 1px solid var(--border-card);
+            border-radius: 16px; padding: 18px 20px;
+            display: flex; flex-direction: column; gap: 6px;
+            transition: transform .2s, box-shadow .2s;
+        }
+        .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,.3); }
+        .kpi-card-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); }
+        .kpi-card-value { font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 900; color: var(--text-primary); }
+        .kpi-card-sub   { font-size: 11px; color: var(--text-secondary); }
+        .kpi-card.green  { border-color: rgba(34,197,94,.3);  }
+        .kpi-card.blue   { border-color: rgba(99,102,241,.3); }
+        .kpi-card.amber  { border-color: rgba(245,158,11,.3); }
+        .kpi-card.purple { border-color: rgba(168,85,247,.3); }
+        .kpi-card.green  .kpi-card-value { color: #34d399; }
+        .kpi-card.blue   .kpi-card-value { color: #818cf8; }
+        .kpi-card.amber  .kpi-card-value { color: #fbbf24; }
+        .kpi-card.purple .kpi-card-value { color: #c084fc; }
+
+        /* ── GRID LAYOUT ── */
+        .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+        @media (max-width: 860px) { .dash-grid { grid-template-columns: 1fr; } }
+
+        /* ── PANEL ── */
+        .panel {
+            background: var(--bg-card); border: 1px solid var(--border-card);
+            border-radius: 16px; padding: 22px 24px;
+        }
+        .panel-title {
+            font-size: 13px; font-weight: 700; color: var(--text-primary);
+            margin-bottom: 18px; display: flex; align-items: center; gap: 8px;
+        }
+        .panel-title svg { color: var(--accent-blue); }
+
+        /* ── TOP 10 ── */
+        .top-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,.05);
+        }
+        .top-item:last-child { border-bottom: none; }
+        .top-rank {
+            min-width: 26px; height: 26px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: 900; font-family: 'JetBrains Mono', monospace;
+        }
+        .rank-1 { background: linear-gradient(135deg,#f59e0b,#fbbf24); color: #1a1200; }
+        .rank-2 { background: linear-gradient(135deg,#94a3b8,#cbd5e1); color: #1a1a1a; }
+        .rank-3 { background: linear-gradient(135deg,#b45309,#d97706); color: #fff; }
+        .rank-n { background: rgba(255,255,255,.08); color: var(--text-muted); }
+        .top-info { flex: 1; min-width: 0; }
+        .top-name { font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .top-type { font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
+        .top-bar-wrap { width: 80px; }
+        .top-bar-track { height: 6px; background: rgba(255,255,255,.06); border-radius: 3px; overflow: hidden; }
+        .top-bar-fill  { height: 6px; border-radius: 3px; background: linear-gradient(90deg,#6366f1,#818cf8); }
+        .top-qty { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; color: var(--text-primary); min-width: 32px; text-align: right; }
+        .top-rev { font-size: 11px; color: #34d399; font-weight: 600; text-align: right; white-space: nowrap; }
+
+        /* ── REGISTER FORM ── */
+        .reg-form { display: flex; flex-direction: column; gap: 14px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); }
+        .form-group select,
+        .form-group input {
+            padding: 10px 12px; background: var(--bg-input);
+            border: 1px solid var(--border-card); border-radius: 10px;
+            color: var(--text-primary); font-size: 13px; font-family: 'DM Sans', sans-serif;
+            outline: none; transition: border-color .2s;
+        }
+        .form-group select:focus,
+        .form-group input:focus { border-color: var(--accent-blue); }
+        .btn-register {
+            padding: 13px; border: none; border-radius: 10px; cursor: pointer;
+            background: linear-gradient(135deg,#6366f1,#818cf8);
+            color: #fff; font-size: 14px; font-weight: 700;
+            font-family: 'DM Sans', sans-serif;
+            box-shadow: 0 4px 20px rgba(99,102,241,.4);
+            transition: all .2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-register:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(99,102,241,.5); }
+
+        /* ── HISTORY TABLE ── */
+        .history-wrap { overflow-x: auto; }
+        .history-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .history-table th {
+            text-align: left; padding: 8px 12px;
+            font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em;
+            color: var(--text-muted); border-bottom: 1px solid var(--border-card);
+        }
+        .history-table td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,.04); vertical-align: middle; }
+        .history-table tr:last-child td { border-bottom: none; }
+        .history-table tr:hover td { background: rgba(255,255,255,.02); }
+        .badge-ch {
+            font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 5px;
+        }
+        .ch-direct { background: rgba(34,197,94,.15); color: #34d399; }
+        .ch-mkt    { background: rgba(245,158,11,.15); color: #fbbf24; }
+        .btn-del-sale {
+            background: none; border: none; cursor: pointer; color: #f87171;
+            padding: 4px; border-radius: 5px; transition: background .2s;
+        }
+        .btn-del-sale:hover { background: rgba(239,68,68,.15); }
+
+        /* ── TOOLBAR ── */
+        .section-toolbar {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 12px; margin-bottom: 20px; flex-wrap: wrap;
+        }
+        .section-title { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+        .filter-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+        .chip {
+            padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+            border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.05);
+            color: var(--text-secondary); cursor: pointer; transition: all .2s;
+        }
+        .chip.active { background: var(--accent-blue); border-color: var(--accent-blue); color: #fff; }
+
+        /* ── EMPTY ── */
+        .empty-msg { text-align: center; padding: 40px 20px; color: var(--text-secondary); font-size: 13px; }
+        .empty-msg .em-icon { font-size: 36px; margin-bottom: 12px; }
+
+        /* ── CHART WRAPPER ── */
+        .chart-box { position: relative; height: 220px; }
+    </style>
+</head>
+<body>
+<div class="bg-animation">
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+</div>
+
+<!-- DRAWER -->
+<div id="drawerOverlay" class="drawer-overlay"></div>
+<div class="app-drawer" id="appDrawer">
+        <div class="drawer-header">
+            <h2>Meus 3D</h2>
+            <button class="drawer-close" id="closeDrawer" aria-label="Fechar menu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <nav class="drawer-nav">
+            <a href="index.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                </svg>
+                Calculadora (1 Peça)
+            </a>
+            <a href="kit.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                Calculadora (Kits)
+            </a>
+            <a href="filamentos.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                Cadastro de Filamentos
+            </a>
+            <a href="auxiliares.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+                Materiais Auxiliares
+            </a>
+                <a href="embalagens.html" class="drawer-nav-item">📦 Embalagens</a>
+            <a href="marketplaces.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                Canais de Venda
+            </a>
+            <a href="producao.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg>
+                Produção &amp; Projeções
+            </a>
+            <a href="produtos.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M3 9h18M3 15h18M9 3v18M15 3v18"></path></svg>
+                Estoque de Produtos
+            </a>
+            <a href="vendas.html" class="drawer-nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                Registro de Vendas
+            </a>
+            <a href="curva_abc.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M3 3v18h18"/><path d="M7 14l5-5 4 4 5-9"/>
+                </svg>
+                Curva ABC
+            </a>
+            <a href="curva_abc_filamentos.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <circle cx="12" cy="12" r="10"></circle><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                </svg>
+                Curva ABC (Filamentos)
+            </a>
+            <a href="loja.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                Página de Vendas
+            </a>
+        
+                    <a href="falhas.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                Gestão de Falhas
+            </a>        
+            <a href="consignados.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                Locais Consignados
+            </a>
+            <a href="dre.html" class="drawer-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+            DRE & Financeiro
+        </a>        <a href="maquinas.html" class="drawer-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                <rect x="2" y="6" width="20" height="12" rx="2" ry="2"></rect><path d="M12 12v.01"></path><path d="M17 12v.01"></path><path d="M7 12v.01"></path>
+            </svg>
+            M&aacute;quinas &amp; Manuten&ccedil;&atilde;o
+        </a>
+            <a href="trabalho.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M20 7h-3V4c0-1.1-.9-2-2-2H9c-1.1 0-2 .9-2 2v3H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zM9 4h6v3H9V4z"></path>
+                </svg>
+                Gestão de Trabalho
+            </a>
+    </nav>
+    </div>
+
+<!-- HEADER -->
+<header class="header" id="header">
+    <div class="header-content">
+        <div class="header-left">
+            <button class="menu-toggle" id="openDrawer" aria-label="Abrir menu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
+            <div class="header-brand">
+                <h1 class="header-title">Registro de Vendas</h1>
+                <p class="header-subtitle">Histórico, análise e top produtos</p>
+            </div>
+        </div>
+        <div class="header-right">
+            <button class="btn-icon" id="themeToggle" title="Alternar tema">
+                <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            </button>
+        </div>
+    </div>
+</header>
+
+<div id="toast"></div>
+
+<main class="main-content">
+
+    <!-- KPI STRIP -->
+    <div class="kpi-strip" id="kpiStrip">
+        <div class="kpi-card green">
+            <div class="kpi-card-label">Receita Total</div>
+            <div class="kpi-card-value" id="kpiRevenue">R$ 0,00</div>
+            <div class="kpi-card-sub" id="kpiRevenueSub">0 vendas registradas</div>
+        </div>
+        <div class="kpi-card blue">
+            <div class="kpi-card-label">Lucro Total</div>
+            <div class="kpi-card-value" id="kpiProfit">R$ 0,00</div>
+            <div class="kpi-card-sub" id="kpiProfitSub">Margem média: 0%</div>
+        </div>
+        <div class="kpi-card amber">
+            <div class="kpi-card-label">Unidades Vendidas</div>
+            <div class="kpi-card-value" id="kpiUnits">0</div>
+            <div class="kpi-card-sub" id="kpiUnitsSub">Ticket médio: R$ 0,00</div>
+        </div>
+        <div class="kpi-card purple">
+            <div class="kpi-card-label">Mês Atual</div>
+            <div class="kpi-card-value" id="kpiMonth">R$ 0,00</div>
+            <div class="kpi-card-sub" id="kpiMonthSub">0 vendas este mês</div>
+        </div>
+    </div>
+
+    <!-- MAIN GRID: top10 -->
+    <div class="dash-grid" style="grid-template-columns: 1fr;">
+
+        <!-- TOP 10 -->
+        <div class="panel">
+            <div class="panel-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                Top 10 Mais Vendidos
+            </div>
+            <div id="top10List">
+                <div class="empty-msg"><div class="em-icon">🏆</div>Nenhuma venda registrada ainda.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- REVENUE CHART + CHANNEL BREAKDOWN -->
+    <div class="dash-grid" style="margin-bottom:28px;">
+        <div class="panel">
+            <div class="panel-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="3" width="18" height="18" rx="2"/><polyline points="3 9 9 9 9 21"/><polyline points="9 9 15 9 15 21"/><polyline points="15 9 21 9 21 21"/></svg>
+                Receita dos Últimos 30 Dias
+            </div>
+            <div class="chart-box"><canvas id="revenueChart"></canvas></div>
+        </div>
+        <div class="panel">
+            <div class="panel-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+                Vendas por Canal
+            </div>
+            <div class="chart-box"><canvas id="channelChart"></canvas></div>
+        </div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="panel" style="margin-bottom: 40px;">
+        <div class="section-toolbar">
+            <div class="section-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="display:inline;vertical-align:middle;margin-right:6px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                Histórico de Vendas
+            </div>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <div class="filter-chips" id="filterChips">
+                    <div class="chip active" data-filter="all" onclick="setFilter('all')">Todos</div>
+                    <div class="chip" data-filter="direct" onclick="setFilter('direct')">Direta</div>
+                    <div class="chip" data-filter="marketplace" onclick="setFilter('marketplace')">Marketplace</div>
+                    <div class="chip" data-filter="consignado" onclick="setFilter('consignado')">Consignado</div>
+                </div>
+                <button onclick="exportCSV()" style="padding:6px 14px; border-radius:8px; border:1px solid rgba(255,255,255,.15); background:rgba(255,255,255,.05); color:var(--text-secondary); font-size:12px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Exportar CSV
+                </button>
+            </div>
+        </div>
+        <div class="history-wrap">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Produto</th>
+                        <th>Qtd</th>
+                        <th>Preço Unit.</th>
+                        <th>Receita</th>
+                        <th>Lucro</th>
+                        <th>Margem</th>
+                        <th>Canal</th>
+                        <th>Obs.</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="historyBody">
+                    <tr><td colspan="10"><div class="empty-msg"><div class="em-icon">📋</div>Nenhuma venda registrada.</div></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</main>
+
+<script>
+// ── STORAGE ────────────────────────────────────────────
+const SALES_KEY = 'meus3d_sales_history';
+function loadSalesRaw()  { try { return JSON.parse(localStorage.getItem(SALES_KEY)) || []; } catch(e) { return []; } }
+function saveSalesRaw(s) { localStorage.setItem(SALES_KEY, JSON.stringify(s)); }
+
+function loadAllProducts() {
+    const single = (JSON.parse(localStorage.getItem('savedProducts3d') || '[]')).map(p => ({ ...p, _type: 'single' }));
+    const kits   = (JSON.parse(localStorage.getItem('savedProducts3d_kit') || '[]')).map(p => ({ ...p, _type: 'kit' }));
+    return [...single, ...kits].sort((a,b) => a.name.localeCompare(b.name));
+}
+
+// ── FLATTEN SALES (from loja.html orders & consignado) ──────────────
+function getFlattenedSales() {
+    const raw = loadSalesRaw();
+    const flat = [];
+    
+    // Load products map to lookup missing costs from old sales
+    const products = loadAllProducts();
+    const pMap = {};
+    products.forEach(p => { pMap[p.id] = p; });
+
+    raw.forEach(order => {
+        const orderDate = order.timestamp ? order.timestamp.split('T')[0] : new Date().toISOString().split('T')[0];
+        (order.items || []).forEach((item, idx) => {
+            const qty = item.qty || 1;
+            const price = item.price || 0;
+            const revenue = price * qty;
+            const isMkt = (item.channel === 'marketplace');
+            
+            // Calc cost: unitCostTotalFull for marketplace, unitCostProduction for direct
+            let unitCost = 0;
+            if (item.costs) {
+                unitCost = isMkt ? (item.costs.unitCostTotalFull || 0) : (item.costs.unitCostProduction || item.costs.unitCostTotalFull || 0);
+            }
+            
+            // Fallback for old sales where costs wasn't properly saved
+            if (unitCost === 0 && pMap[item.id] && pMap[item.id].results) {
+                const r = pMap[item.id].results;
+                if (isMkt) {
+                    unitCost = r.unitCostTotalFull || r.unitCost || 0;
+                } else {
+                    unitCost = r.unitCostProduction || r.unitCostTotalFull || r.unitCost || 0;
+                }
+            }
+            
+            // Note: platform fee is already included in unitCostTotalFull, so we don't need to add it again here.
+
+            const cost = unitCost * qty;
+            const profit = revenue - cost;
+            const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
+
+            flat.push({
+                orderId: order.id,
+                itemId: `${order.id}_${idx}`, // unique identifier for the table
+                productId: item.id,
+                productName: item.name || 'Produto',
+                type: item.type || 'single',
+                qty,
+                price,
+                channel: item.channel || 'direct',
+                date: orderDate,
+                unitCost,
+                revenue,
+                cost,
+                profit,
+                margin
+            });
+        });
+    });
+
+    // ── INCLUDE CONSIGNMENT SALES ────────────────────────────
+    try {
+        const consigVendas = JSON.parse(localStorage.getItem('meus3d_consignados_vendas_v1') || '[]');
+        const consigEstoque = JSON.parse(localStorage.getItem('meus3d_consignados_estoque_v1') || '[]');
+        
+        consigVendas.forEach((v, idx) => {
+            // Find corresponding inventory item to get productId
+            const invItem = consigEstoque.find(e => e.id === v.inventoryId);
+            const pId = invItem ? invItem.productId : null;
+            
+            let unitCost = 0;
+            if (pId && pMap[pId] && pMap[pId].results) {
+                unitCost = pMap[pId].results.unitCostProduction || pMap[pId].results.unitCostTotalFull || pMap[pId].results.unitCost || 0;
+            }
+
+            const qty = v.qty || 1;
+            // For consignments, use grossValue as revenue to show true selling price
+            const revenue = parseFloat(v.grossValue) || 0;
+            const price = qty > 0 ? (revenue / qty) : 0;
+            
+            // Treat the partner commission as an operational cost
+            const netValue = parseFloat(v.netValue) || 0;
+            const commissionCost = revenue - netValue;
+            
+            const cost = (unitCost * qty) + commissionCost;
+            const profit = revenue - cost;
+            const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
+            
+            const orderDate = v.date ? v.date.split('T')[0] : new Date().toISOString().split('T')[0];
+            
+            flat.push({
+                orderId: v.id,
+                itemId: `csg_${v.id}_${idx}`,
+                productId: pId,
+                productName: v.productName || 'Produto Consignado',
+                type: 'single', 
+                qty: qty,
+                price: price,
+                channel: 'consignado',
+                date: orderDate,
+                unitCost: unitCost,
+                revenue: revenue,
+                cost: cost,
+                profit: profit,
+                margin: margin
+            });
+        });
+    } catch (e) {
+        console.error('Error loading consignment sales:', e);
+    }
+    
+    return flat;
+}
+
+// ── TOAST ──────────────────────────────────────────────
+const toastEl = document.getElementById('toast');
+let toastTimer;
+function showToast(msg, type='success') {
+    toastEl.textContent = msg;
+    toastEl.className = 'show ' + type;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { toastEl.className = ''; }, 2800);
+}
+
+// ── FORMAT ─────────────────────────────────────────────
+function fmtR(v) { return 'R$ ' + (v||0).toFixed(2).replace('.',','); }
+function fmtDate(d) {
+    const dt = new Date(d + 'T12:00:00');
+    return dt.toLocaleDateString('pt-BR');
+}
+const CH_LABELS = { direct:'Direta', marketplace:'Marketplace', consignado:'Consignado', encomenda:'Encomenda', outro:'Outro' };
+
+// ── DELETE SALE (ORDER) ────────────────────────────────
+function deleteSale(orderId) {
+    if (!confirm('Remover esta ordem de venda do histórico? Todos os itens dela serão removidos.')) return;
+    const sales = loadSalesRaw().filter(s => String(s.id) !== String(orderId));
+    saveSalesRaw(sales);
+    refreshAll();
+    showToast('Ordem removida.', 'error');
+}
+
+// ── FILTER ─────────────────────────────────────────────
+let currentFilter = 'all';
+function setFilter(f) {
+    currentFilter = f;
+    document.querySelectorAll('#filterChips .chip').forEach(c => c.classList.toggle('active', c.dataset.filter === f));
+    renderHistory();
+}
+
+
+// ── KPI ────────────────────────────────────────────────
+function renderKPIs(sales) {
+    const rev    = sales.reduce((a,s) => a + s.revenue, 0);
+    const profit = sales.reduce((a,s) => a + s.profit, 0);
+    const units  = sales.reduce((a,s) => a + s.qty, 0);
+    const avgM   = sales.length > 0 ? sales.reduce((a,s) => a + s.margin, 0) / sales.length : 0;
+    const ticket = units > 0 ? rev / units : 0;
+
+    const now   = new Date();
+    const month = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    const mSales = sales.filter(s => s.date.startsWith(month));
+    const mRev   = mSales.reduce((a,s) => a + s.revenue, 0);
+
+    document.getElementById('kpiRevenue').textContent    = fmtR(rev);
+    document.getElementById('kpiRevenueSub').textContent = `${sales.length} venda${sales.length !== 1 ? 's' : ''} registrada${sales.length !== 1 ? 's' : ''}`;
+    document.getElementById('kpiProfit').textContent     = fmtR(profit);
+    document.getElementById('kpiProfitSub').textContent  = `Margem média: ${avgM.toFixed(1).replace('.',',')}%`;
+    document.getElementById('kpiUnits').textContent      = units;
+    document.getElementById('kpiUnitsSub').textContent   = `Ticket médio: ${fmtR(ticket)}`;
+    document.getElementById('kpiMonth').textContent      = fmtR(mRev);
+    document.getElementById('kpiMonthSub').textContent   = `${mSales.length} venda${mSales.length !== 1 ? 's' : ''} este mês`;
+}
+
+// ── TOP 10 ─────────────────────────────────────────────
+function renderTop10(sales) {
+    const map = {};
+    sales.forEach(s => {
+        if (!map[s.productId]) map[s.productId] = { name: s.productName, type: s.type, qty: 0, revenue: 0 };
+        map[s.productId].qty     += s.qty;
+        map[s.productId].revenue += s.revenue;
+    });
+    const sorted = Object.values(map).sort((a,b) => b.qty - a.qty).slice(0,10);
+    const maxQty = sorted[0]?.qty || 1;
+    const el = document.getElementById('top10List');
+    if (sorted.length === 0) {
+        el.innerHTML = '<div class="empty-msg"><div class="em-icon">🏆</div>Nenhuma venda registrada ainda.</div>';
+        return;
+    }
+    el.innerHTML = sorted.map((item, i) => {
+        const rank = i + 1;
+        const rankCls = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : 'rank-n';
+        const barW = ((item.qty / maxQty) * 100).toFixed(0);
+        return `<div class="top-item">
+            <div class="top-rank ${rankCls}">${rank}</div>
+            <div class="top-info">
+                <div class="top-name">${item.name}</div>
+                <div class="top-type">${item.type === 'kit' ? 'Kit' : 'Peça Única'}</div>
+            </div>
+            <div class="top-bar-wrap">
+                <div class="top-bar-track"><div class="top-bar-fill" style="width:${barW}%"></div></div>
+            </div>
+            <div class="top-qty">${item.qty}</div>
+            <div class="top-rev">${fmtR(item.revenue)}</div>
+        </div>`;
+    }).join('');
+}
+
+// ── HISTORY ────────────────────────────────────────────
+function renderHistory() {
+    const flatSales = getFlattenedSales();
+    const filtered = currentFilter === 'all' ? flatSales : flatSales.filter(s => s.channel === currentFilter);
+    const tbody = document.getElementById('historyBody');
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10"><div class="empty-msg"><div class="em-icon">📋</div>Nenhuma venda encontrada.</div></td></tr>';
+        return;
+    }
+    // newest first
+    const sorted = [...filtered].sort((a,b) => b.orderId - a.orderId);
+    tbody.innerHTML = sorted.map(s => {
+        const chCls = s.channel === 'marketplace' ? 'ch-mkt' : s.channel === 'consignado' ? 'ch-mkt' : 'ch-direct';
+        const profitColor = s.profit >= 0 ? '#34d399' : '#f87171';
+        return `<tr>
+            <td style="white-space:nowrap; color:var(--text-secondary);">${fmtDate(s.date)}</td>
+            <td style="font-weight:600; max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${s.productName}</td>
+            <td style="font-family:'JetBrains Mono',monospace; font-weight:700;">${s.qty}</td>
+            <td style="font-family:'JetBrains Mono',monospace;">${fmtR(s.price)}</td>
+            <td style="font-family:'JetBrains Mono',monospace; font-weight:700;">${fmtR(s.revenue)}</td>
+            <td style="font-family:'JetBrains Mono',monospace; font-weight:700; color:${profitColor};">${fmtR(s.profit)}</td>
+            <td style="color:${profitColor};">${(s.margin||0).toFixed(1).replace('.',',')}%</td>
+            <td><span class="badge-ch ${chCls}">${CH_LABELS[s.channel] || s.channel}</span></td>
+            <td style="color:var(--text-muted); font-size:12px; max-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${s.note || '—'}</td>
+            <td><button class="btn-del-sale" onclick="deleteSale(${s.orderId})" title="Remover ordem inteira">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+            </button></td>
+        </tr>`;
+    }).join('');
+}
+
+// ── CHARTS ─────────────────────────────────────────────
+let revenueChartInst = null, channelChartInst = null;
+
+function renderCharts(sales) {
+    // Revenue last 30 days
+    const days = 30;
+    const labels = [], data = [];
+    for (let i = days - 1; i >= 0; i--) {
+        const d = new Date(); d.setDate(d.getDate() - i);
+        const key = d.toISOString().split('T')[0];
+        labels.push(i === 0 ? 'Hoje' : d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' }));
+        data.push(sales.filter(s => s.date === key).reduce((a,s) => a + s.revenue, 0));
+    }
+
+    const rCtx = document.getElementById('revenueChart').getContext('2d');
+    if (revenueChartInst) revenueChartInst.destroy();
+    revenueChartInst = new Chart(rCtx, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Receita',
+                data,
+                borderColor: '#6366f1',
+                backgroundColor: 'rgba(99,102,241,0.15)',
+                fill: true,
+                tension: 0.4,
+                pointRadius: 3,
+                pointHoverRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { beginAtZero: true, grid: { color: 'var(--border-card)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // Channel Distribution (Last 30 days)
+    const cCtx = document.getElementById('channelChart').getContext('2d');
+    const chData = {};
+    sales.forEach(s => { chData[s.channel] = (chData[s.channel] || 0) + s.revenue; });
+
+    if (channelChartInst) channelChartInst.destroy();
+    channelChartInst = new Chart(cCtx, {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(chData).map(k => CH_LABELS[k] || k),
+            datasets: [{
+                data: Object.values(chData),
+                backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#64748b'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'right', labels: { color: '#9ca3af', font: { size: 11, family: "'DM Sans', sans-serif" } } }
+            },
+            cutout: '70%'
+        }
+    });
+}
+
+
+// ── DRAWER + THEME ────────────────────────────────────
+/* Drawer handled by shared.js */
+const themeToggle = document.getElementById('themeToggle');
+themeToggle.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    localStorage.setItem('meus3d_theme', isDark ? 'light' : 'dark');
+});
+const savedTheme = localStorage.getItem('meus3d_theme');
+if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+
+function refreshAll() {
+    const flatSales = getFlattenedSales();
+    renderKPIs(flatSales);
+    renderTop10(flatSales);
+    renderHistory();
+    renderCharts(flatSales);
+}
+
+// ── INIT ──────────────────────────────────────────────
+refreshAll();
+
+</script>
+    <script src="shared.js?v=1.3"></script>
+</body>
+</html>

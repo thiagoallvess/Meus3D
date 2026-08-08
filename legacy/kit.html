@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Calculadora de Precificação para Impressão 3D - Calcule custos, lucros e margens de suas peças impressas em 3D de forma rápida e precisa.">
+    <title>Calculadora de Kits 3D</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=1784496084994">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="bg-orb bg-orb-1"></div>
+        <div class="bg-orb bg-orb-2"></div>
+        <div class="bg-orb bg-orb-3"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="header" id="header">
+        <div class="header-content">
+            <div class="header-left">
+                <button class="menu-toggle" id="menuToggle" aria-label="Abrir menu principal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                <div class="logo">
+                    <svg class="logo-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20 2L36 11V29L20 38L4 29V11L20 2Z" stroke="url(#logoGrad)" stroke-width="2.5" fill="none"/>
+                        <path d="M20 8L30 14V26L20 32L10 26V14L20 8Z" fill="url(#logoGrad)" opacity="0.3"/>
+                        <path d="M20 14L25 17.5V24.5L20 28L15 24.5V17.5L20 14Z" fill="url(#logoGrad)" opacity="0.6"/>
+                        <defs>
+                            <linearGradient id="logoGrad" x1="4" y1="2" x2="36" y2="38">
+                                <stop offset="0%" stop-color="#6366f1"/>
+                                <stop offset="100%" stop-color="#a855f7"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div>
+                        <h1>Calculadora de Kits</h1>
+                        <p class="header-subtitle">Impressão 3D</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <button class="btn-icon" id="saveAllDefaults" title="Salvar configurações padrão" aria-label="Salvar configurações padrão">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                    </svg>
+                </button>
+                <button class="btn-icon" id="themeToggle" title="Alternar tema" aria-label="Alternar tema">
+                    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                    </svg>
+                    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
+                </button>
+                <button class="btn-icon" id="historyToggle" title="Histórico" aria-label="Histórico">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    <span class="badge" id="historyBadge">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Product Name -->
+        <div class="product-name-bar">
+            <div class="input-group">
+                <label for="productName">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                    </svg>
+                    Nome do Produto
+                </label>
+                <input type="text" id="productName" placeholder="Ex: Suporte para celular, Vaso decorativo..." autocomplete="off">
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Custos da Impressão Card -->
+            <section class="card card-costs" id="printCostsCard">
+                <div class="card-header">
+                    <div class="card-icon card-icon-blue">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
+                        </svg>
+                    </div>
+                    <h2>Custos da Impressão</h2>
+                </div>
+                <div class="card-body">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border-card);">
+                        <h3 style="font-size: 1rem; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 6px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
+                            Cores da Impressão
+                        </h3>
+                        <button type="button" class="btn-secondary" id="btnAddFilament" style="padding: 6px 12px; font-size: 12px; height: auto;">+ Adicionar Cor</button>
+                    </div>
+                    
+                    <div id="filamentsContainer" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
+                        <!-- JS renders rows here -->
+                    </div>
+
+                      <div class="section-header" style="margin-top: 32px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                          <h3 class="section-title" style="margin-bottom: 0;">
+                              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                              </svg>
+                              Materiais Auxiliares (Opcional)
+                          </h3>
+                          <button type="button" class="btn-secondary" id="btnAddAuxiliary" style="padding: 6px 12px; font-size: 12px; height: auto;">+ Adicionar Insumo</button>
+                      </div>
+                      
+                      <div id="auxiliariesContainer" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
+                          <!-- JS renders rows here -->
+                      </div>
+
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Tempo de impressão (h : m)</label>
+                            <div style="display: flex; gap: 8px;">
+                                <div class="input-wrapper" style="flex: 1;">
+                                    <input type="number" id="printTime" placeholder="0" min="0" step="1">
+                                    <span class="input-suffix">h</span>
+                                </div>
+                                <div class="input-wrapper" style="flex: 1;">
+                                    <input type="number" id="printTimeMinutes" placeholder="0" min="0" max="59" step="1">
+                                    <span class="input-suffix">m</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="quantity">Quantidade de kits</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="quantity" placeholder="1" min="1" step="1" value="1">
+                                <span class="input-suffix">un.</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label for="piecesPerKit">Peças por Kit</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="piecesPerKit" placeholder="1" min="1" step="1" value="1">
+                                <span class="input-suffix">pç/kit</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Custos Operacionais Card -->
+            <section class="card card-operational" id="operationalCostsCard">
+                <div class="card-header">
+                    <div class="card-icon card-icon-amber">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+                        </svg>
+                    </div>
+                    <h2>Custos Operacionais</h2>
+                </div>
+                <div class="card-body">
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label for="packagingIdSelect">Embalagem Salva</label>
+                            <div class="input-wrapper">
+                                <select id="packagingIdSelect">
+                                    <option value="">Customizado...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="packagingCost">Custo/unidade (R$)</label>
+                            <div class="input-wrapper">
+                                <span class="input-prefix">R$</span>
+                                <input type="number" id="packagingCost" placeholder="0,00" min="0" step="0.01">
+                            </div>
+                        </div>
+                    </div>
+                        <div class="input-group">
+                            <label for="otherCosts">Outros custos (R$)</label>
+                            <div class="input-wrapper">
+                                <span class="input-prefix">R$</span>
+                                <input type="number" id="otherCosts" placeholder="0,00" min="0" step="0.01">
+                            </div>
+                        </div>
+                    </div>
+            </section>
+
+            <!-- Máquina & Extras Card -->
+            <section class="card card-machine" id="machineCard">
+                <div class="card-header">
+                    <div class="card-icon card-icon-cyan">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                    </div>
+                    <h2>Máquina & Extras</h2>
+                </div>
+                <div class="card-body">
+                    <div class="input-group" style="margin-bottom: 16px;">
+                        <label for="machineIdSelect">Máquina Destinada (Para cálculo de Payback)</label>
+                        <div class="input-wrapper">
+                            <select id="machineIdSelect">
+                                <option value="">Sem máquina específica</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label for="powerConsumption">Potência da impressora (W)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="powerConsumption" placeholder="Ex: 350" min="0" step="1">
+                                <span class="input-suffix">W</span>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="kwhCost">Valor do kWh (R$)</label>
+                            <div class="input-wrapper">
+                                <span class="input-prefix">R$</span>
+                                <input type="number" id="kwhCost" placeholder="0,00" min="0" step="0.01">
+                            </div>
+                            <span class="input-hint" style="display: flex; justify-content: flex-end;">
+                                <span data-result="inlineEnergyCost" style="color: var(--accent-blue); font-weight: 600;"></span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label for="machineHourCost">Custo horário máquina (R$/h)</label>
+                            <div class="input-wrapper">
+                                <span class="input-prefix">R$</span>
+                                <input type="number" id="machineHourCost" placeholder="1,70" min="0" step="0.01" value="1.7">
+                                <span class="input-suffix">/h</span>
+
+                            </div>
+                            <span class="input-hint" style="display: flex; justify-content: space-between;">
+                                <span>depreciação + manutenção</span>
+                                <span data-result="inlineMachineCost" style="color: var(--accent-blue); font-weight: 600;"></span>
+                            </span>
+                        </div>
+                        <div class="input-group">
+                            <label for="postProcessing">Pós-processamento (R$/kit)</label>
+                            <div class="input-wrapper">
+                                <span class="input-prefix">R$</span>
+                                <input type="number" id="postProcessing" placeholder="0,00" min="0" step="0.01">
+                            </div>
+                            <span class="input-hint" style="display: flex; justify-content: space-between;">
+                                <span>lixar, pintar, acabamento</span>
+                                <span data-result="inlinePostProcessingCost" style="color: var(--accent-blue); font-weight: 600;"></span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label for="designCost">Design / modelagem (R$/kit)</label>
+                            <div class="input-wrapper">
+                                <span class="input-prefix">R$</span>
+                                <input type="number" id="designCost" placeholder="0,00" min="0" step="0.01">
+                            </div>
+                            <span class="input-hint" style="display: flex; justify-content: space-between;">
+                                <span>rateio por kit</span>
+                                <span data-result="inlineDesignCost" style="color: var(--accent-blue); font-weight: 600;"></span>
+                            </span>
+                        </div>
+                        <div class="input-group">
+                            <label for="failureRate">Taxa de falha (%)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="failureRate" placeholder="0" min="0" max="100" step="1">
+                                <span class="input-suffix">%</span>
+                            </div>
+                            <span class="input-hint" style="display: flex; justify-content: space-between;">
+                                <span>reserva para reimpressão</span>
+                                <span data-result="inlineFailureCost" style="color: var(--accent-blue); font-weight: 600;"></span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Venda Card -->
+            <section class="card card-sale" id="saleCard">
+                <div class="card-header">
+                    <div class="card-icon card-icon-green">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                        </svg>
+                    </div>
+                    <h2>Venda</h2>
+                </div>
+                <div class="card-body">
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label for="salePrice">Venda Direta (R$)</label>
+                            <div class="input-wrapper">
+                                <span class="input-prefix">R$</span>
+                                <input type="number" id="salePrice" placeholder="0,00" min="0" step="0.01">
+                            </div>
+                            <span class="input-hint" id="previewDirect" style="font-size: 11px;"></span>
+                        </div>
+                        <div class="input-group">
+                            <label for="salePriceMarketplace">Venda Marketplace (R$)</label>
+                            <div class="input-wrapper">
+                                <span class="input-prefix">R$</span>
+                                <input type="number" id="salePriceMarketplace" placeholder="0,00" min="0" step="0.01">
+                            </div>
+                            <span class="input-hint" id="previewMarketplace" style="font-size: 11px;"></span>
+                        </div>
+                    </div>
+                    <!-- Action Buttons -->
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" id="calculateBtn" title="Calcular">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                                <rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="10" y2="18"/><line x1="14" y1="18" x2="16" y2="18"/>
+                            </svg>
+                            Calcular
+                        </button>
+                        <button class="btn btn-secondary" id="clearBtn" title="Limpar">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                                <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                            </svg>
+                            Limpar
+                        </button>
+                        <button class="btn btn-accent" id="exportBtn" title="Exportar PDF">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+                            </svg>
+                            Exportar PDF
+                        </button>
+                        <button class="btn btn-save" id="saveBtn" title="Salvar produto">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+                            </svg>
+                            Salvar
+                        </button>
+                        <button class="btn" id="sendProdBtn" title="Enviar para Produção" style="background-color: var(--accent-purple); color: white; border: none; padding: var(--space-sm) var(--space-md);">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                            </svg>
+                            + Produção
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Resultados Card -->
+            <section class="card card-results" id="resultsCard">
+                <div class="card-header">
+                    <div class="card-icon card-icon-purple">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                        </svg>
+                    </div>
+                    <h2>Resultados</h2>
+                </div>
+                <div class="card-body">
+                    
+                    <!-- Controles de Visão -->
+                    <div class="results-controls">
+                        <div class="toggle-group" id="viewModeToggle">
+                            <button class="toggle-btn active" data-mode="unit">1 Kit</button>
+                            <button class="toggle-btn" data-mode="batch">Lote</button>
+                        </div>
+                        <div class="toggle-group" id="marketplaceToggles" style="overflow-x: auto; white-space: nowrap; max-width: 100%;">
+                            <!-- JS vai injetar botões aqui -->
+                        </div>
+                    </div>
+
+                    <!-- Resultado Visual -->
+                    <div class="rv">
+                        <!-- Hero: Lucro -->
+                        <div class="rv-hero" id="rvHero">
+                            <div class="rv-hero-glow"></div>
+                            <div class="rv-hero-content">
+                                <div class="rv-hero-top">
+                                    <div class="rv-stat">
+                                        <span class="rv-stat-label">Receita</span>
+                                        <span class="rv-stat-val" id="rvRevenue">R$ 0,00</span>
+                                    </div>
+                                    <div class="rv-stat">
+                                        <span class="rv-stat-label">Custo Total</span>
+                                        <span class="rv-stat-val" id="rvTotalCost">R$ 0,00</span>
+                                    </div>
+                                </div>
+                                <div class="rv-hero-profit">
+                                    <span class="rv-hero-profit-label">Lucro Líquido</span>
+                                    <span class="rv-hero-profit-value" id="rvProfit">R$ 0,00</span>
+                                </div>
+                                <div class="rv-margin-track">
+                                    <div class="rv-margin-fill" id="rvMarginFill"></div>
+                                </div>
+                                <div class="rv-margin-text">Margem: <strong id="rvMargin">0,0%</strong></div>
+                            </div>
+                        </div>
+
+                        <!-- Waterfall: Composição do Custo -->
+                        <div class="rv-waterfall">
+                            <div class="rv-wf-title">Composição dos Custos</div>
+
+                            <div class="rv-bar-row" data-color="indigo">
+                                <span class="rv-bar-name">Filamento <span class="rv-bar-hint" id="rvFilaWeight"></span></span>
+                                <div class="rv-bar-track"><div class="rv-bar-fill" id="rvBarFila"></div></div>
+                                <span class="rv-bar-val" id="rvFilaCost">R$ 0</span>
+                            </div>
+                            
+                            <div class="rv-bar-row" data-color="emerald">
+                                <span class="rv-bar-name">Auxiliares</span>
+                                <div class="rv-bar-track"><div class="rv-bar-fill" id="rvBarAux"></div></div>
+                                <span class="rv-bar-val" id="rvAuxCost">R$ 0</span>
+                            </div>
+<div class="rv-bar-row" data-color="cyan">
+                                <span class="rv-bar-name">Energia</span>
+                                <div class="rv-bar-track"><div class="rv-bar-fill" id="rvBarEnergy"></div></div>
+                                <span class="rv-bar-val" id="rvEnergyCost">R$ 0</span>
+                            </div>
+                            <div class="rv-bar-row" data-color="purple">
+                                <span class="rv-bar-name">Máquina</span>
+                                <div class="rv-bar-track"><div class="rv-bar-fill" id="rvBarMachine"></div></div>
+                                <span class="rv-bar-val" id="rvMachineCost">R$ 0</span>
+                            </div>
+                            <div class="rv-bar-row" data-color="rose">
+                                <span class="rv-bar-name">Falha</span>
+                                <div class="rv-bar-track"><div class="rv-bar-fill" id="rvBarFail"></div></div>
+                                <span class="rv-bar-val" id="rvFailCost">R$ 0</span>
+                            </div>
+                            <div class="rv-bar-row" data-color="amber">
+                                <span class="rv-bar-name">Pós-proc.</span>
+                                <div class="rv-bar-track"><div class="rv-bar-fill" id="rvBarPost"></div></div>
+                                <span class="rv-bar-val" id="rvPostCost">R$ 0</span>
+                            </div>
+                            <div class="rv-bar-row" data-color="orange">
+                                <span class="rv-bar-name">Design</span>
+                                <div class="rv-bar-track"><div class="rv-bar-fill" id="rvBarDesign"></div></div>
+                                <span class="rv-bar-val" id="rvDesignCost">R$ 0</span>
+                            </div>
+                            <div class="rv-bar-row" data-color="teal">
+                                <span class="rv-bar-name">Embalagem</span>
+                                <div class="rv-bar-track"><div class="rv-bar-fill" id="rvBarPack"></div></div>
+                                <span class="rv-bar-val" id="rvPackCost">R$ 0</span>
+                            </div>
+                            <div class="rv-bar-row" data-color="blue">
+                                <span class="rv-bar-name">Frete</span>
+                                <div class="rv-bar-track"><div class="rv-bar-fill" id="rvBarShip"></div></div>
+                                <span class="rv-bar-val" id="rvShipCost">R$ 0</span>
+                            </div>
+                            <div class="rv-bar-row" data-color="red">
+                                <span class="rv-bar-name">Plataforma</span>
+                                <div class="rv-bar-track"><div class="rv-bar-fill" id="rvBarPlat"></div></div>
+                                <span class="rv-bar-val" id="rvPlatCost">R$ 0</span>
+                            </div>
+                            <div class="rv-bar-row" data-color="gray">
+                                <span class="rv-bar-name">Outros</span>
+                                <div class="rv-bar-track"><div class="rv-bar-fill" id="rvBarOther"></div></div>
+                                <span class="rv-bar-val" id="rvOtherCost">R$ 0</span>
+                            </div>
+
+                            <!-- Profit bar -->
+                            <div class="rv-bar-row rv-bar-profit" data-color="green">
+                                <span class="rv-bar-name"><strong>LUCRO</strong></span>
+                                <div class="rv-bar-track"><div class="rv-bar-fill" id="rvBarProfit"></div></div>
+                                <span class="rv-bar-val" id="rvProfitBar">R$ 0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-grid" id="chartsSection">
+            <section class="card card-chart">
+                <div class="card-header">
+                    <h2>Distribuição dos Custos</h2>
+                </div>
+                <div class="card-body chart-container">
+                    <canvas id="costDistributionChart"></canvas>
+                </div>
+            </section>
+            <section class="card card-chart">
+                <div class="card-header">
+                    <h2>Margem de Lucro</h2>
+                </div>
+                <div class="card-body chart-container">
+                    <canvas id="profitMarginChart"></canvas>
+                </div>
+            </section>
+            <section class="card card-chart">
+                <div class="card-header">
+                    <h2>Faturamento vs Lucro</h2>
+                </div>
+                <div class="card-body chart-container">
+                    <canvas id="revenueVsProfitChart"></canvas>
+                </div>
+            </section>
+        </div>
+
+        <!-- Saved Products Section -->
+        <section class="card card-history" id="savedProductsSection" style="display:none;">
+            <div class="card-header">
+                <div class="card-icon card-icon-amber">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+                    </svg>
+                </div>
+                <h2>Kits Salvos</h2>
+                <button class="btn btn-small btn-danger" id="clearHistoryBtn" title="Limpar histórico">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                        <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                    Limpar Tudo
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="saved-products-list" id="savedProductsList">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- History Sidebar -->
+    <aside class="history-sidebar" id="historySidebar">
+        <div class="sidebar-header">
+            <h3>Histórico de Cálculos</h3>
+            <button class="btn-icon" id="closeSidebar" aria-label="Fechar histórico">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+        <div class="sidebar-body" id="historyList">
+            <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+                <p>Nenhum cálculo realizado ainda</p>
+            </div>
+        </div>
+    </aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <footer class="footer">
+        <p>Calculadora de Precificação 3D &copy; 2026 &mdash; Desenvolvido para makers e empreendedores</p>
+    </footer>
+
+    <div class="drawer-overlay" id="drawerOverlay"></div>
+    <div class="app-drawer" id="appDrawer">
+        <div class="drawer-header">
+            <h2>Meus 3D</h2>
+            <button class="drawer-close" id="closeDrawer" aria-label="Fechar menu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <nav class="drawer-nav">
+            <a href="index.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                </svg>
+                Calculadora (1 Peça)
+            </a>
+            <a href="kit.html" class="drawer-nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <line x1="3.27" y1="6.96" x2="12" y2="12.01"></line>
+                    <line x1="20.73" y1="6.96" x2="12" y2="12.01"></line>
+                </svg>
+                Calculadora de Kits
+            </a>
+            <a href="filamentos.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                Cadastro de Filamentos
+            </a>
+            <a href="auxiliares.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+                Materiais Auxiliares
+            </a>
+                <a href="embalagens.html" class="drawer-nav-item">📦 Embalagens</a>
+            <a href="marketplaces.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                Canais de Venda
+            </a>
+            <a href="producao.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg>
+                Produção &amp; Projeções
+            </a>
+            <a href="produtos.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M3 9h18M3 15h18M9 3v18M15 3v18"></path></svg>
+                Estoque de Produtos
+            </a>
+            <a href="vendas.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                Registro de Vendas
+            </a>
+            <a href="curva_abc.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M3 3v18h18"/><path d="M7 14l5-5 4 4 5-9"/>
+                </svg>
+                Curva ABC
+            </a>
+            <a href="curva_abc_filamentos.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <circle cx="12" cy="12" r="10"></circle><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                </svg>
+                Curva ABC (Filamentos)
+            </a>
+            <a href="loja.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                Página de Vendas
+            </a>
+            <a href="falhas.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                Gestão de Falhas
+            </a>        
+            <a href="consignados.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                Locais Consignados
+            </a>
+            <a href="dre.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                DRE & Financeiro
+            </a>
+            <a href="maquinas.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <rect x="2" y="6" width="20" height="12" rx="2" ry="2"></rect><path d="M12 12v.01"></path><path d="M17 12v.01"></path><path d="M7 12v.01"></path>
+                </svg>
+                M&aacute;quinas &amp; Manuten&ccedil;&atilde;o
+            </a>
+            <a href="trabalho.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M20 7h-3V4c0-1.1-.9-2-2-2H9c-1.1 0-2 .9-2 2v3H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zM9 4h6v3H9V4z"></path>
+                </svg>
+                Gestão de Trabalho
+            </a>
+        </nav>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="shared.js?v=1.3"></script>
+    <script src="calculator-core.js?v=1.0"></script>
+    <script src="script-kit.js?v=1.0"></script>
+</body>
+</html>

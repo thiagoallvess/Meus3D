@@ -1,0 +1,898 @@
+    <!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meus 3D - DRE</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { overflow-x: hidden; }
+
+        /* ── CART BUTTON ────────────────── */
+        .cart-btn { position:relative;background:none;border:none;color:var(--text-secondary);cursor:pointer;padding:6px;display:flex;align-items:center;transition:color .2s; }
+        .cart-btn:hover { color:var(--accent-blue); }
+        .cart-badge { position:absolute;top:-2px;right:-4px;background:#f97316;color:#fff;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;line-height:1;transition:transform .3s ease; }
+        .cart-badge.pulse { animation:badgePulse .4s ease; }
+        @keyframes badgePulse { 0%{transform:scale(1)} 50%{transform:scale(1.4)} 100%{transform:scale(1)} }
+        .cart-badge:empty { display:none; }
+
+        /* ── TOAST ──────────────────────── */
+        #toast {
+            position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+            background:var(--bg-card);border:1px solid var(--border-card);border-radius:10px;
+            padding:12px 20px;font-size:13px;font-weight:500;
+            color:var(--text-primary);z-index:999;transition:transform .3s ease;
+            box-shadow:0 8px 32px rgba(0,0,0,.5);pointer-events:none;
+        }
+        #toast.show { transform:translateX(-50%) translateY(0); }
+        #toast.success { border-color:#10b981;color:#34d399; }
+        #toast.error   { border-color:#ef4444;color:#f87171; }
+
+        /* ── STORE PROFILE ──────────────── */
+        .store-profile {
+            background:var(--bg-card);border:1px solid var(--border-card);border-radius:12px;
+            padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:14px;
+            transition:border-color .2s;
+        }
+        .store-profile:hover { border-color:var(--accent-blue); }
+        .store-avatar {
+            width:48px;height:48px;border-radius:12px;
+            background:linear-gradient(135deg,#f97316,#ea580c);
+            display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;
+        }
+        .store-info { flex:1;min-width:0; }
+        .store-name { font-size:16px;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+        .seller-name { font-size:12px;color:var(--text-secondary);margin-top:2px; }
+        .store-edit-btn {
+            background:none;border:1px solid var(--border-card);border-radius:8px;padding:6px 8px;
+            color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;transition:all .2s;
+        }
+        .store-edit-btn:hover { border-color:var(--accent-blue);color:var(--accent-blue); }
+
+        /* ── STORE EDIT MODAL ───────────── */
+        .modal-overlay {
+            display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);
+            backdrop-filter:blur(4px);z-index:2000;align-items:center;justify-content:center;
+        }
+        .modal-overlay.open { display:flex; }
+        .modal-box {
+            background:var(--bg-card);border:1px solid var(--border-card);border-radius:16px;
+            padding:28px;width:90%;max-width:400px;
+        }
+        .modal-title { font-size:16px;font-weight:700;margin-bottom:16px; color: var(--text-primary); }
+        .modal-field { margin-bottom:14px; }
+        .modal-field label { display:block;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px; }
+        .modal-field input {
+            width:100%;padding:10px 14px;background:var(--bg-input);border:1px solid var(--border-card);border-radius:8px;
+            color:var(--text-primary);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;
+        }
+        .modal-field input:focus { border-color:var(--accent-blue); }
+        .modal-actions { display:flex;gap:10px;justify-content:flex-end;margin-top:20px; }
+        .modal-btn {
+            padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;
+            cursor:pointer;border:none;transition:all .2s;font-family:'DM Sans',sans-serif;
+        }
+        .modal-btn-cancel { background:var(--bg-input);color:var(--text-secondary); }
+        .modal-btn-cancel:hover { background:var(--border-card);color:var(--text-primary); }
+        .modal-btn-save { background:linear-gradient(135deg, #10b981 0%, #059669 100%);color:#fff; }
+        .modal-btn-save:hover { filter: brightness(1.1); }
+
+        /* ── SEARCH ─────────────────────── */
+        .toolbar { display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap; }
+        .search-wrap { position:relative;flex:1;min-width:180px; }
+        .search-wrap input {
+            width:100%;padding:10px 14px 10px 38px;background:var(--bg-input);border:1px solid var(--border-card);
+            border-radius:10px;color:var(--text-primary);font-size:14px;outline:none;transition:border-color .2s;
+        }
+        .search-wrap input:focus { border-color:var(--accent-blue); }
+        .search-wrap input::placeholder { color:var(--text-muted); }
+        .search-icon { position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-secondary); }
+
+        /* ── PRODUCT GRID ──────────────── */
+        .product-grid {
+            display:grid;
+            grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+            gap:16px;
+        }
+
+        .product-card {
+            background:var(--bg-card);border:1px solid var(--border-card);border-radius:14px;
+            overflow:hidden;transition:all .3s ease;display:flex;flex-direction:column;
+        }
+        .product-card:hover {
+            border-color:var(--accent-blue);
+            transform:translateY(-3px);
+            box-shadow:0 8px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        /* ── IMAGE AREA ────────────────── */
+        .card-image-area {
+            position:relative;width:100%;aspect-ratio:4/3;background:linear-gradient(135deg,#111827 0%,#0d1117 100%);
+            display:flex;align-items:center;justify-content:center;overflow:hidden;
+        }
+        .card-image-area img {
+            width:100%;height:100%;object-fit:cover;
+        }
+        .card-placeholder-icon { color:var(--border-card); }
+        .card-upload-btn {
+            position:absolute;bottom:10px;right:10px;background:rgba(13,17,23,.85);
+            backdrop-filter:blur(8px);border:1px solid var(--border-card);border-radius:8px;
+            padding:7px 9px;cursor:pointer;color:var(--text-secondary);display:flex;align-items:center;gap:5px;
+            font-size:11px;font-weight:600;transition:all .2s;font-family:'DM Sans',sans-serif;
+        }
+        .card-upload-btn:hover { border-color:var(--accent-blue);color:var(--accent-blue); }
+
+        /* ── CARD BODY ─────────────────── */
+        .card-body { padding:16px 18px;flex:1;display:flex;flex-direction:column; }
+        .card-top { display:flex;align-items:center;gap:8px;margin-bottom:8px; }
+        .card-tag {
+            display:inline-block;font-size:10px;font-weight:700;letter-spacing:.06em;
+            text-transform:uppercase;padding:3px 8px;border-radius:4px;
+        }
+        .tag-single { background:rgba(99,102,241,.15);color:#818cf8; }
+        .tag-kit    { background:rgba(16,185,129,.15);color:#34d399; }
+        .card-name { font-size:15px;font-weight:700;color:var(--text-primary);line-height:1.3; }
+
+        .card-price {
+            font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:900;
+            color:var(--accent-green);margin:10px 0 8px;
+        }
+
+        .card-meta { display:flex;flex-wrap:wrap;gap:6px 12px;margin-bottom:12px; }
+        .card-meta-item { font-size:12px;color:var(--text-secondary);display:flex;align-items:center;gap:4px; }
+        .card-meta-item svg { flex-shrink:0; }
+
+        .card-stock {
+            font-size:12px;font-weight:600;padding:4px 10px;border-radius:6px;
+            display:inline-flex;align-items:center;gap:4px;width:fit-content;margin-bottom:14px;
+        }
+        .stock-available { background:rgba(16,185,129,.1);color:#34d399; }
+        .stock-out { background:rgba(239,68,68,.1);color:#f87171; }
+
+        .card-footer { margin-top:auto; }
+        .add-cart-btn {
+            width:100%;padding:10px;border-radius:10px;border:none;
+            background:linear-gradient(135deg, #10b981 0%, #059669 100%);color:#fff;
+            font-size:13px;font-weight:700;cursor:pointer;
+            font-family:'DM Sans',sans-serif;
+            transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;
+        }
+        .add-cart-btn:hover:not(:disabled) { filter:brightness(1.1);transform:scale(1.02); }
+        .add-cart-btn:disabled { opacity:.35;cursor:not-allowed;filter:none;transform:none; }
+        .add-cart-btn.added { background:linear-gradient(135deg, #059669, #047857); }
+
+        /* ── CART SIDEBAR ──────────────── */
+        .cart-overlay {
+            display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);
+            backdrop-filter:blur(4px);z-index:1500;
+        }
+        .cart-overlay.open { display:block; }
+        .cart-sidebar {
+            position:fixed;top:0;right:-420px;width:400px;max-width:100vw;height:100%;
+            background:var(--bg-card);backdrop-filter:blur(20px);
+            border-left:1px solid var(--border-card);z-index:1501;
+            display:flex;flex-direction:column;transition:right .3s ease;
+        }
+        .cart-sidebar.open { right:0; }
+        .cart-header {
+            display:flex;align-items:center;justify-content:space-between;
+            padding:20px;border-bottom:1px solid var(--border-card);flex-shrink:0;
+            color: var(--text-primary);
+        }
+        .cart-header h2 { font-size:16px;font-weight:700; }
+        .cart-close-btn { background:none;border:none;color:var(--text-secondary);cursor:pointer;padding:4px;display:flex;align-items:center;transition:color .2s; }
+        .cart-close-btn:hover { color:var(--text-primary); }
+
+        .cart-items { flex:1;overflow-y:auto;padding:16px 20px; }
+        .cart-empty { text-align:center;color:var(--text-muted);padding:40px 20px;font-size:14px; }
+        .cart-empty svg { margin-bottom:12px;opacity:.4; }
+
+        .cart-item {
+            background:var(--bg-input);border:1px solid var(--border-card);border-radius:10px;
+            padding:14px;margin-bottom:10px;transition:border-color .2s;
+        }
+        .cart-item:hover { border-color:var(--accent-blue); }
+        .cart-item-top { display:flex;align-items:flex-start;justify-content:space-between;gap:10px; }
+        .cart-item-name { font-size:14px;font-weight:600;color:var(--text-primary);flex:1; }
+        .cart-item-remove {
+            background:none;border:none;color:var(--text-secondary);cursor:pointer;padding:2px;
+            display:flex;align-items:center;transition:color .2s;
+        }
+        .cart-item-remove:hover { color:#f87171; }
+        .cart-item-bottom { display:flex;align-items:center;justify-content:space-between;margin-top:10px; }
+        .qty-controls { display:flex;align-items:center;gap:4px; }
+        .qty-btn {
+            width:28px;height:28px;background:var(--bg-card);border:1px solid var(--border-card);border-radius:6px;
+            color:var(--text-primary);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+            transition:background .15s;font-family:'DM Sans',sans-serif;
+        }
+        .qty-btn:hover { background:var(--border-card); }
+        .qty-value {
+            width:40px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:14px;
+            font-weight:700;color:var(--text-primary);background:var(--bg-input);
+            border:1px solid var(--border-card);border-radius:6px;padding:4px;outline:none;
+            transition:border-color .2s;
+        }
+        .qty-value:focus { border-color:var(--accent-blue); }
+        .qty-value::-webkit-outer-spin-button, .qty-value::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .qty-value[type=number] { -moz-appearance: textfield; }
+        .cart-item-subtotal {
+            font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:var(--accent-green);
+        }
+
+        /* ── CART FOOTER ───────────────── */
+        .cart-footer {
+            border-top:1px solid var(--border-card);padding:20px;flex-shrink:0;
+        }
+        .cart-summary { display:flex;justify-content:space-between;margin-bottom:6px; }
+        .cart-summary-label { font-size:13px;color:var(--text-secondary); }
+        .cart-summary-value { font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--text-primary); }
+        .cart-total { display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px;padding-top:10px;border-top:1px dashed var(--border-card); }
+        .cart-total-label { font-size:14px;font-weight:700;color:var(--text-primary); }
+        .cart-total-value { font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:900;color:var(--accent-green);line-height:1; }
+
+        .checkout-btn {
+            width:100%;padding:14px;border-radius:10px;border:none;
+            background:linear-gradient(135deg, #10b981 0%, #059669 100%);color:#fff;
+            font-size:15px;font-weight:700;cursor:pointer;
+            font-family:'DM Sans',sans-serif;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;
+        }
+        .checkout-btn:hover:not(:disabled) { filter:brightness(1.1);transform:translateY(-2px);box-shadow:0 6px 20px rgba(16, 185, 129, 0.4); }
+        .checkout-btn:disabled { opacity:.5;cursor:not-allowed; }
+
+        /* ── CONFIRM SALE MODAL ────────── */
+        .confirm-overlay {
+            display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);
+            backdrop-filter:blur(8px);z-index:3000;align-items:center;justify-content:center;
+        }
+        .confirm-overlay.open { display:flex; }
+        .confirm-box {
+            background:var(--bg-card);border:1px solid var(--border-card);border-radius:20px;
+            padding:32px;width:90%;max-width:420px;text-align:center;
+            transform:scale(0.9);opacity:0;transition:all .3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .confirm-overlay.open .confirm-box { transform:scale(1);opacity:1; }
+        .confirm-icon {
+            width:64px;height:64px;background:rgba(16,185,129,.1);color:#34d399;
+            border-radius:32px;display:flex;align-items:center;justify-content:center;
+            margin:0 auto 20px;
+        }
+        .confirm-title { font-size:22px;font-weight:700;color:var(--text-primary);margin-bottom:8px; }
+        .confirm-text { font-size:14px;color:var(--text-secondary);margin-bottom:24px;line-height:1.5; }
+        .confirm-btn {
+            width:100%;padding:14px;border-radius:10px;border:none;
+            background:linear-gradient(135deg, #10b981 0%, #059669 100%);color:#fff;
+            font-size:15px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;
+            transition:all .2s;
+        }
+        .confirm-btn:hover { filter:brightness(1.1); }
+
+        /* ── RESPONSIVE ────────────────── */
+        .wrap { max-width:960px;margin:0 auto;padding:20px; position:relative; z-index:2; }
+        @media (max-width:640px) {
+            .product-grid { grid-template-columns:1fr; }
+            .cart-sidebar { width:100%; }
+            .store-profile { padding:12px 14px; }
+            .wrap { padding:16px; }
+        }
+        @media (min-width:641px) and (max-width:900px) {
+            .product-grid { grid-template-columns:repeat(2,1fr); }
+        }
+        /* ── DRE STYLES ─────────────────── */
+        .dre-filters { display:flex; gap:12px; margin-bottom:20px; }
+        .dre-filters select { padding:10px 14px; background:var(--bg-input, #0d1117); border:1px solid var(--border-card, #1f2937); border-radius:8px; color:var(--text-primary, #f9fafb); outline:none; font-family:'DM Sans',sans-serif; font-size:14px; cursor:pointer; transition:border-color .2s; }
+        .dre-filters select:focus { border-color:var(--accent-blue); }
+        .dre-summary { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:16px; margin-bottom:30px; }
+        .dre-card { background:var(--bg-card, #0d1117); border:1px solid var(--border-card, #1f2937); border-radius:12px; padding:20px; box-shadow:0 4px 20px rgba(0,0,0,.2); transition:border-color .2s; }
+        .dre-card:hover { border-color:var(--accent-blue); }
+        .dre-card-title { font-size:12px; color:var(--text-secondary, #9ca3af); text-transform:uppercase; font-weight:700; letter-spacing:0.05em; }
+        .dre-card-value { font-size:24px; font-weight:700; font-family:'JetBrains Mono', monospace; margin-top:8px; }
+        .val-green { color:#34d399; } .val-red { color:#f87171; } .val-blue { color:#60a5fa; } .val-yellow { color:#fbbf24; }
+        .dre-table-container { background:var(--bg-card, #0d1117); border:1px solid var(--border-card, #1f2937); border-radius:12px; overflow-x:auto; margin-bottom:30px; box-shadow:0 4px 20px rgba(0,0,0,.2); }
+        .dre-table { width:100%; border-collapse:collapse; min-width:600px; }
+        .dre-table th, .dre-table td { padding:14px 20px; text-align:left; border-bottom:1px solid var(--border-card, #1f2937); }
+        .dre-table th { background:rgba(17,24,39,.6); font-size:12px; text-transform:uppercase; color:var(--text-secondary, #6b7280); font-weight:700; }
+        .dre-table tr.total-row td { font-weight:700; background:rgba(255,255,255,0.02); }
+        .dre-table tr.main-row td { font-weight:700; color:var(--text-primary, #f9fafb); }
+        .dre-table tr.sub-row td { padding-left:40px; color:var(--text-secondary, #9ca3af); font-size:14px; }
+        .dre-table td.money { text-align:right; font-family:'JetBrains Mono', monospace; }
+        .chart-container { background:var(--bg-card, #0d1117); border:1px solid var(--border-card, #1f2937); border-radius:12px; padding:20px; margin-bottom:30px; height:300px; }
+        /* ── DRE EXPENSE SECTION ─────────── */
+        .expense-section { margin-top:10px; }
+        .expense-section h3 { font-size:16px; font-weight:700; color:var(--text-primary); margin-bottom:12px; }
+        .expense-btn { padding:9px 18px; border-radius:8px; border:none; background:linear-gradient(135deg,#6366f1,#818cf8); color:#fff; font-size:13px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .2s; }
+        .expense-btn:hover { filter:brightness(1.1); transform:translateY(-1px); }
+    </style>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="bg-orb bg-orb-1"></div>
+        <div class="bg-orb bg-orb-2"></div>
+        <div class="bg-orb bg-orb-3"></div>
+    </div>
+
+    <!-- DRAWER -->
+    <div id="drawerOverlay" class="drawer-overlay"></div>
+    <div class="app-drawer" id="appDrawer">
+        <div class="drawer-header">
+            <h2>Meus 3D</h2>
+            <button class="drawer-close" id="closeDrawer" aria-label="Fechar menu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <nav class="drawer-nav">
+            <a href="index.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                </svg>
+                Calculadora (1 Peça)
+            </a>
+            <a href="kit.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                Calculadora (Kits)
+            </a>
+            <a href="filamentos.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                Cadastro de Filamentos
+            </a>
+            <a href="auxiliares.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+                Materiais Auxiliares
+            </a>
+                <a href="embalagens.html" class="drawer-nav-item">📦 Embalagens</a>
+            <a href="marketplaces.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                Canais de Venda
+            </a>
+            <a href="producao.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg>
+                Produção &amp; Projeções
+            </a>
+            <a href="produtos.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M3 9h18M3 15h18M9 3v18M15 3v18"></path></svg>
+                Estoque de Produtos
+            </a>
+            <a href="vendas.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                Registro de Vendas
+            </a>
+            <a href="curva_abc.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M3 3v18h18"/><path d="M7 14l5-5 4 4 5-9"/>
+                </svg>
+                Curva ABC
+            </a>
+            <a href="curva_abc_filamentos.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <circle cx="12" cy="12" r="10"></circle><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                </svg>
+                Curva ABC (Filamentos)
+            </a>
+            <a href="loja.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                Página de Vendas
+            </a>
+            <a href="falhas.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                Gestão de Falhas
+            </a>
+            <a href="consignados.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                Locais Consignados
+            </a>
+            <a href="dre.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                DRE &amp; Financeiro
+            </a>
+            <a href="maquinas.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <rect x="2" y="6" width="20" height="12" rx="2" ry="2"></rect><path d="M12 12v.01"></path><path d="M17 12v.01"></path><path d="M7 12v.01"></path>
+                </svg>
+                Máquinas &amp; Manutenção
+            </a>
+            <a href="trabalho.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M20 7h-3V4c0-1.1-.9-2-2-2H9c-1.1 0-2 .9-2 2v3H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zM9 4h6v3H9V4z"></path>
+                </svg>
+                Gestão de Trabalho
+            </a>
+        </nav>
+    </div>
+        <a href="dre.html" class="drawer-nav-item active">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+            DRE & Financeiro
+        </a>
+    </nav>
+</div>
+    <!-- Header -->
+    <header class="header" id="header">
+        <div class="header-content">
+            <div class="header-left">
+                <button class="menu-toggle" id="openDrawer" aria-label="Abrir menu principal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                <div class="logo">
+                    <svg class="logo-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20 2L36 11V29L20 38L4 29V11L20 2Z" stroke="url(#logoGrad)" stroke-width="2.5" fill="none"/>
+                        <path d="M20 8L30 14V26L20 32L10 26V14L20 8Z" fill="url(#logoGrad)" opacity="0.3"/>
+                        <path d="M20 14L25 17.5V24.5L20 28L15 24.5V17.5L20 14Z" fill="url(#logoGrad)" opacity="0.6"/>
+                        <defs>
+                            <linearGradient id="logoGrad" x1="4" y1="2" x2="36" y2="38">
+                                <stop offset="0%" stop-color="#6366f1"/>
+                                <stop offset="100%" stop-color="#a855f7"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div>
+                        <h1>DRE &amp; Financeiro</h1>
+                        <p class="header-subtitle">Demonstração do Resultado do Exercício</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <button class="btn-icon" id="themeToggle" title="Alternar tema" aria-label="Alternar tema">
+                    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                    </svg>
+                    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="wrap">
+        <div class="dre-filters">
+            <select id="monthFilter">
+                <option value="all">Todo o Período</option>
+                <option value="0">Janeiro</option><option value="1">Fevereiro</option><option value="2">Março</option>
+                <option value="3">Abril</option><option value="4">Maio</option><option value="5">Junho</option>
+                <option value="6">Julho</option><option value="7">Agosto</option><option value="8">Setembro</option>
+                <option value="9">Outubro</option><option value="10">Novembro</option><option value="11">Dezembro</option>
+            </select>
+            <select id="yearFilter">
+                <option value="all">Todos os Anos</option>
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+                <option value="2026">2026</option>
+            </select>
+        </div>
+
+        <div class="dre-summary">
+            <div class="dre-card">
+                <div class="dre-card-title">Receita Bruta Total</div>
+                <div class="dre-card-value val-blue" id="sumReceita">R$ 0,00</div>
+            </div>
+            <div class="dre-card">
+                <div class="dre-card-title">Custos Variáveis (CPV + Taxas)</div>
+                <div class="dre-card-value val-red" id="sumCpv">- R$ 0,00</div>
+            </div>
+            <div class="dre-card">
+                <div class="dre-card-title">Lucro Líquido</div>
+                <div class="dre-card-value val-green" id="sumLucro">R$ 0,00</div>
+            </div>
+            <div class="dre-card">
+                <div class="dre-card-title">Margem Líquida</div>
+                <div class="dre-card-value" id="sumMargem">0%</div>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <canvas id="dreChart"></canvas>
+        </div>
+
+        <div class="dre-table-container">
+            <table class="dre-table">
+                <thead>
+                    <tr>
+                        <th>Descrição</th>
+                        <th class="money">Valor (R$)</th>
+                        <th class="money">% Receita</th>
+                    </tr>
+                </thead>
+                <tbody id="dreBody">
+                </tbody>
+            </table>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h2 style="font-size:16px;">Despesas Adicionais (Operacionais)</h2>
+            <button class="modal-btn modal-btn-save" id="addExpenseBtn">+ Lançar Despesa</button>
+        </div>
+        
+        <div class="dre-table-container">
+            <table class="dre-table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Descrição</th>
+                        <th class="money">Valor (R$)</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody id="expensesBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-overlay" id="expenseModal">
+        <div class="modal-box">
+            <h3 class="modal-title">Lançar Nova Despesa</h3>
+            <div class="modal-field">
+                <label>Descrição</label>
+                <input type="text" id="expenseDesc" placeholder="Ex: Aluguel, Tráfego Pago, Embalagens Extras">
+            </div>
+            <div class="modal-field">
+                <label>Data</label>
+                <input type="date" id="expenseDate">
+            </div>
+            <div class="modal-field">
+                <label>Valor (R$)</label>
+                <input type="number" id="expenseValue" placeholder="0.00" step="0.01">
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn modal-btn-cancel" id="closeExpenseModal">Cancelar</button>
+                <button class="modal-btn modal-btn-save" id="saveExpenseBtn">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Setup Drawer
+        const menuBtn = document.getElementById('openDrawer');
+        const drawer = document.querySelector('.app-drawer');
+        const overlay = document.querySelector('.drawer-overlay');
+        const closeBtn = document.querySelector('.drawer-close');
+
+        function openMenu() {
+            drawer.classList.add('open');
+            overlay.classList.add('open');
+        }
+        function closeMenu() {
+            drawer.classList.remove('open');
+            overlay.classList.remove('open');
+        }
+        menuBtn.addEventListener('click', openMenu);
+        closeBtn.addEventListener('click', closeMenu);
+        overlay.addEventListener('click', closeMenu);
+
+        // Load Data
+        function loadSales() {
+            return JSON.parse(localStorage.getItem('meus3d_sales_history') || '[]');
+        }
+        function loadExpenses() {
+            return JSON.parse(localStorage.getItem('meus3d_dre_expenses') || '[]');
+        }
+        function saveExpenses(exp) {
+            localStorage.setItem('meus3d_dre_expenses', JSON.stringify(exp));
+        }
+
+        // DRE Logic
+        let currentMonth = new Date().getMonth().toString();
+        let currentYear = new Date().getFullYear().toString();
+        document.getElementById('monthFilter').value = currentMonth;
+        document.getElementById('yearFilter').value = currentYear;
+
+        document.getElementById('monthFilter').addEventListener('change', (e) => { currentMonth = e.target.value; renderDRE(); });
+        document.getElementById('yearFilter').addEventListener('change', (e) => { currentYear = e.target.value; renderDRE(); });
+
+        function fmt(n) { return n.toFixed(2).replace('.', ','); }
+
+        let chartInstance = null;
+
+        function renderDRE() {
+            const allSales = loadSales();
+            const allExpenses = loadExpenses();
+            const allConsignedSales = JSON.parse(localStorage.getItem('meus3d_consignados_vendas_v1') || '[]');
+
+            // Filter
+            const sales = allSales.filter(s => {
+                if (currentMonth === 'all' && currentYear === 'all') return true;
+                const d = new Date(s.timestamp);
+                if (currentYear !== 'all' && d.getFullYear().toString() !== currentYear) return false;
+                if (currentMonth !== 'all' && d.getMonth().toString() !== currentMonth) return false;
+                return true;
+            });
+            const expenses = allExpenses.filter(e => {
+                if (currentMonth === 'all' && currentYear === 'all') return true;
+                const d = new Date(e.date);
+                if (currentYear !== 'all' && d.getFullYear().toString() !== currentYear) return false;
+                if (currentMonth !== 'all' && d.getMonth().toString() !== currentMonth) return false;
+                return true;
+            });
+            const consignedSales = allConsignedSales.filter(v => {
+                if (currentMonth === 'all' && currentYear === 'all') return true;
+                const d = new Date(v.date);
+                if (currentYear !== 'all' && d.getFullYear().toString() !== currentYear) return false;
+                if (currentMonth !== 'all' && d.getMonth().toString() !== currentMonth) return false;
+                return true;
+            });
+
+            // Calculate
+            let recDireta = 0;
+            let recMkt = 0;
+            let recConsig = 0;
+            let cpv = 0;
+            let cpvFilamento = 0;
+            let cpvEnergia = 0;
+            let cpvMaquina = 0;
+            let cpvPos = 0;
+            let cpvDesign = 0;
+            let cpvFalha = 0;
+            let cpvEmbalagem = 0;
+            let cpvOutros = 0;
+            let cpvGenerico = 0;
+            let taxasMkt = 0;
+            let comissaoConsig = 0;
+            let totalFrete = 0;
+
+            const addDetailedCosts = (c, qty) => {
+                cpvFilamento += (c.filamentCost || 0) * qty;
+                cpvEnergia += (c.energyCost || 0) * qty;
+                cpvMaquina += (c.machineCost || 0) * qty;
+                cpvPos += (c.postProcessing || 0) * qty;
+                cpvDesign += (c.designCost || 0) * qty;
+                cpvFalha += (c.failureCost || 0) * qty;
+                cpvEmbalagem += (c.packagingCost || 0) * qty;
+                cpvOutros += (c.otherCosts || 0) * qty;
+            };
+
+            sales.forEach(sale => {
+                if (sale.shipping !== undefined) {
+                    totalFrete += sale.shipping;
+                }
+                if (sale.taxes !== undefined) {
+                    taxasMkt += sale.taxes;
+                }
+
+                sale.items.forEach(item => {
+                    const rev = item.price * item.qty;
+                    if (item.channel === 'marketplace') {
+                        recMkt += rev;
+                        if (item.costs) {
+                            cpv += (item.costs.unitCostProduction || 0) * item.qty;
+                            addDetailedCosts(item.costs, item.qty);
+                            if (sale.taxes === undefined) {
+                                taxasMkt += (item.costs.platformFeeValue || 0) * item.qty;
+                            }
+                            if (sale.shipping === undefined) {
+                                totalFrete += (item.costs.shippingCost || 0) * item.qty;
+                            }
+                        } else {
+                            const genCpv = (rev * 0.2);
+                            cpv += genCpv;
+                            cpvGenerico += genCpv;
+                            if (sale.taxes === undefined) {
+                                taxasMkt += (rev * 0.2); // chuta 20% de taxa
+                            }
+                        }
+                    } else if (item.channel === 'consignado') {
+                        recConsig += rev;
+                        if (item.costs) {
+                            cpv += (item.costs.unitCostProduction || 0) * item.qty;
+                            addDetailedCosts(item.costs, item.qty);
+                            if (sale.shipping === undefined) {
+                                totalFrete += (item.costs.shippingCost || 0) * item.qty;
+                            }
+                            comissaoConsig += (rev * 0.3); // Estimativa padrão de 30% para consignado
+                        } else {
+                            const genCpv = (rev * 0.2);
+                            cpv += genCpv;
+                            cpvGenerico += genCpv;
+                            comissaoConsig += (rev * 0.3);
+                        }
+                    } else {
+                        recDireta += rev;
+                        if (item.costs) {
+                            cpv += (item.costs.unitCostProduction || 0) * item.qty;
+                            addDetailedCosts(item.costs, item.qty);
+                            if (sale.shipping === undefined) {
+                                totalFrete += (item.costs.shippingCost || 0) * item.qty;
+                            }
+                        } else {
+                            const genCpv = (rev * 0.2);
+                            cpv += genCpv;
+                            cpvGenerico += genCpv;
+                        }
+                    }
+                });
+            });
+
+            consignedSales.forEach(v => {
+                const gross = v.grossValue || 0;
+                const net = v.netValue || 0;
+                recConsig += gross;
+                comissaoConsig += (gross - net);
+                const genCpv = (gross * 0.2);
+                cpv += genCpv;
+                cpvGenerico += genCpv; // Fallback estimate since costs aren't explicitly saved in the consigned sale snapshot yet
+            });
+
+            const recBruta = recDireta + recMkt + recConsig;
+            const dedusoes = taxasMkt + totalFrete + comissaoConsig;
+            const recLiquida = recBruta - dedusoes;
+            const lucroBruto = recLiquida - cpv;
+            const despOp = expenses.reduce((s, e) => s + Number(e.value), 0);
+            const lucroLiquido = lucroBruto - despOp;
+            const margem = recBruta > 0 ? (lucroLiquido / recBruta) * 100 : 0;
+
+            // Update Cards
+            document.getElementById('sumReceita').textContent = 'R$ ' + fmt(recBruta);
+            document.getElementById('sumCpv').textContent = '- R$ ' + fmt(cpv + dedusoes);
+            document.getElementById('sumLucro').textContent = 'R$ ' + fmt(lucroLiquido);
+            document.getElementById('sumLucro').className = 'dre-card-value ' + (lucroLiquido >= 0 ? 'val-green' : 'val-red');
+            document.getElementById('sumMargem').textContent = fmt(margem) + '%';
+            document.getElementById('sumMargem').className = 'dre-card-value ' + (margem >= 0 ? 'val-green' : 'val-red');
+
+            // Render Table
+            const body = document.getElementById('dreBody');
+            const pct = (val) => recBruta > 0 ? fmt((val / recBruta) * 100) + '%' : '0,00%';
+            
+            body.innerHTML = `
+                <tr class="main-row"><td>1. Receita Bruta de Vendas</td><td class="money">R$ ${fmt(recBruta)}</td><td class="money">100,00%</td></tr>
+                <tr class="sub-row"><td>Venda Direta</td><td class="money">R$ ${fmt(recDireta)}</td><td class="money">${pct(recDireta)}</td></tr>
+                <tr class="sub-row"><td>Venda Marketplace</td><td class="money">R$ ${fmt(recMkt)}</td><td class="money">${pct(recMkt)}</td></tr>
+                <tr class="sub-row"><td>Venda Consignado</td><td class="money">R$ ${fmt(recConsig)}</td><td class="money">${pct(recConsig)}</td></tr>
+                
+                <tr class="main-row"><td>2. Deduções da Receita</td><td class="money val-red">- R$ ${fmt(dedusoes)}</td><td class="money">${pct(dedusoes)}</td></tr>
+                <tr class="sub-row"><td>Taxas de Marketplace</td><td class="money val-red">- R$ ${fmt(taxasMkt)}</td><td class="money">${pct(taxasMkt)}</td></tr>
+                <tr class="sub-row"><td>Comissão Consignado</td><td class="money val-red">- R$ ${fmt(comissaoConsig)}</td><td class="money">${pct(comissaoConsig)}</td></tr>
+                <tr class="sub-row"><td>Frete</td><td class="money val-red">- R$ ${fmt(totalFrete)}</td><td class="money">${pct(totalFrete)}</td></tr>
+                
+                <tr class="total-row" style="color:#60a5fa;"><td>3. Receita Líquida (1 - 2)</td><td class="money">R$ ${fmt(recLiquida)}</td><td class="money">${pct(recLiquida)}</td></tr>
+                
+                <tr class="main-row"><td>4. Custos (CPV)</td><td class="money val-red">- R$ ${fmt(cpv)}</td><td class="money">${pct(cpv)}</td></tr>
+                <tr class="sub-row"><td>Custo de Filamento</td><td class="money val-red">- R$ ${fmt(cpvFilamento)}</td><td class="money">${pct(cpvFilamento)}</td></tr>
+                <tr class="sub-row"><td>Energia</td><td class="money val-red">- R$ ${fmt(cpvEnergia)}</td><td class="money">${pct(cpvEnergia)}</td></tr>
+                <tr class="sub-row"><td>Máquina (Desgaste/Uso)</td><td class="money val-red">- R$ ${fmt(cpvMaquina)}</td><td class="money">${pct(cpvMaquina)}</td></tr>
+                <tr class="sub-row"><td>Pós-Processamento</td><td class="money val-red">- R$ ${fmt(cpvPos)}</td><td class="money">${pct(cpvPos)}</td></tr>
+                <tr class="sub-row"><td>Design / Modelagem</td><td class="money val-red">- R$ ${fmt(cpvDesign)}</td><td class="money">${pct(cpvDesign)}</td></tr>
+                <tr class="sub-row"><td>Embalagem</td><td class="money val-red">- R$ ${fmt(cpvEmbalagem)}</td><td class="money">${pct(cpvEmbalagem)}</td></tr>
+                <tr class="sub-row"><td>Outros Custos</td><td class="money val-red">- R$ ${fmt(cpvOutros)}</td><td class="money">${pct(cpvOutros)}</td></tr>
+                <tr class="sub-row"><td>Custo de Falhas</td><td class="money val-red">- R$ ${fmt(cpvFalha)}</td><td class="money">${pct(cpvFalha)}</td></tr>
+                ${cpvGenerico > 0 ? `<tr class="sub-row"><td>Custos Genéricos (Estimados)</td><td class="money val-red">- R$ ${fmt(cpvGenerico)}</td><td class="money">${pct(cpvGenerico)}</td></tr>` : ''}
+                
+                <tr class="total-row" style="color:#fbbf24;"><td>5. Lucro Bruto (3 - 4)</td><td class="money">R$ ${fmt(lucroBruto)}</td><td class="money">${pct(lucroBruto)}</td></tr>
+                
+                <tr class="main-row"><td>6. Despesas Operacionais Adicionais</td><td class="money val-red">- R$ ${fmt(despOp)}</td><td class="money">${pct(despOp)}</td></tr>
+                
+                <tr class="total-row" style="color:${lucroLiquido>=0?'#34d399':'#f87171'};font-size:16px;"><td>7. Lucro Líquido Final (5 - 6)</td><td class="money">R$ ${fmt(lucroLiquido)}</td><td class="money">${pct(lucroLiquido)}</td></tr>
+            `;
+
+            // Render Expenses
+            const expBody = document.getElementById('expensesBody');
+            expBody.innerHTML = expenses.map(e => `
+                <tr>
+                    <td>${new Date(e.date).toLocaleDateString('pt-BR')}</td>
+                    <td>${e.desc}</td>
+                    <td class="money">R$ ${fmt(Number(e.value))}</td>
+                    <td>
+                        <button onclick="delExpense('${e.id}')" style="background:none;border:none;color:#f87171;cursor:pointer;">Remover</button>
+                    </td>
+                </tr>
+            `).join('');
+            if(expenses.length === 0) {
+                expBody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#6b7280;padding:24px;">Nenhuma despesa lançada neste período.</td></tr>`;
+            }
+
+            // Update Chart
+            updateChart(recLiquida, cpv, despOp, lucroLiquido);
+        }
+
+        function updateChart(recLiq, cpv, despOp, lucro) {
+            const ctx = document.getElementById('dreChart').getContext('2d');
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+            
+            Chart.defaults.color = '#9ca3af';
+            Chart.defaults.font.family = "'DM Sans', sans-serif";
+
+            // Para o grafico, vamos mostrar: Receita Bruta, Custos, Despesas e Lucro
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Receita Líquida', 'CPV (Custos)', 'Desp. Adicionais', 'Lucro Líquido'],
+                    datasets: [{
+                        label: 'Valores Financeiros',
+                        data: [recLiq, cpv, despOp, lucro],
+                        backgroundColor: [
+                            'rgba(96, 165, 250, 0.7)',
+                            'rgba(248, 113, 113, 0.7)',
+                            'rgba(248, 113, 113, 0.7)',
+                            lucro >= 0 ? 'rgba(52, 211, 153, 0.7)' : 'rgba(248, 113, 113, 0.7)'
+                        ],
+                        borderColor: [
+                            '#60a5fa',
+                            '#f87171',
+                            '#f87171',
+                            lucro >= 0 ? '#34d399' : '#f87171'
+                        ],
+                        borderWidth: 2,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Expense Modal
+        document.getElementById('addExpenseBtn').addEventListener('click', () => {
+            document.getElementById('expenseDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('expenseModal').classList.add('open');
+        });
+        document.getElementById('closeExpenseModal').addEventListener('click', () => {
+            document.getElementById('expenseModal').classList.remove('open');
+        });
+        document.getElementById('saveExpenseBtn').addEventListener('click', () => {
+            const desc = document.getElementById('expenseDesc').value;
+            const date = document.getElementById('expenseDate').value;
+            const value = document.getElementById('expenseValue').value;
+            if(!desc || !date || !value) return alert('Preencha todos os campos!');
+
+            const exps = loadExpenses();
+            exps.push({ id: Date.now().toString(), desc, date, value: Number(value) });
+            saveExpenses(exps);
+
+            document.getElementById('expenseModal').classList.remove('open');
+            document.getElementById('expenseDesc').value = '';
+            document.getElementById('expenseValue').value = '';
+            renderDRE();
+        });
+        window.delExpense = (id) => {
+            if(confirm('Tem certeza que deseja remover esta despesa?')) {
+                const exps = loadExpenses();
+                saveExpenses(exps.filter(e => e.id !== id));
+                renderDRE();
+            }
+        };
+
+        renderDRE();
+    </script>
+</body>
+</html>

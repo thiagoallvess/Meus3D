@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Filamentos - Meus 3D</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .filaments-container {
+            padding: var(--space-xl) var(--space-lg);
+            max-width: 1200px;
+            margin: 0 auto;
+            min-height: calc(100vh - 70px);
+        }
+
+        .filament-form-card {
+            position: sticky;
+            top: 100px;
+            align-self: start;
+        }
+
+        .filament-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: var(--space-md);
+        }
+
+        .filament-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: var(--space-md);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-sm);
+            backdrop-filter: blur(10px);
+            transition: transform var(--transition-fast), border-color var(--transition-fast);
+        }
+
+        .filament-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-blue);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .filament-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .filament-brand {
+            font-size: var(--fs-md);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .filament-material {
+            font-size: var(--fs-xs);
+            padding: 2px 8px;
+            background: var(--bg-input);
+            border-radius: 12px;
+            font-weight: 500;
+            color: var(--accent-blue);
+        }
+
+        .filament-color {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: var(--fs-sm);
+            color: var(--text-secondary);
+        }
+
+        .color-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 1px solid var(--border-card);
+        }
+
+        .filament-price {
+            margin-top: auto;
+            padding-top: var(--space-sm);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .price-paid {
+            font-size: var(--fs-sm);
+            color: var(--text-secondary);
+        }
+
+        .price-kg {
+            font-size: var(--fs-lg);
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+
+        .filament-actions {
+            display: flex;
+            gap: var(--space-xs);
+            margin-top: var(--space-sm);
+        }
+
+        .btn-edit, .btn-delete {
+            flex: 1;
+            padding: var(--space-xs);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all var(--transition-fast);
+        }
+
+        .btn-edit {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+        }
+        .btn-edit:hover { background: var(--accent-blue); color: white; border-color: var(--accent-blue); }
+
+        .btn-delete {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--accent-red);
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+        .btn-delete:hover { background: var(--accent-red); color: white; }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: var(--space-2xl);
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 16px;
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+        }
+
+        /* ── FILAMENT STOCK ─────────────── */
+        .fil-stock-row {
+            display: flex; align-items: center; gap: 8px;
+            margin-top: 6px; padding-top: 12px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+        .fil-stock-label { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+        .fil-stock-badge {
+            font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700;
+            padding: 4px 10px; border-radius: 6px; min-width: 40px; text-align: center;
+        }
+        .fil-stock-ok { background: rgba(16,185,129,.15); color: #34d399; }
+        .fil-stock-low { background: rgba(249,115,22,.15); color: #f97316; }
+        .fil-stock-out { background: rgba(239,68,68,.15); color: #f87171; }
+        .fil-stock-controls {
+            display: flex; align-items: center; gap: 4px; margin-left: auto;
+        }
+        .fil-stock-btn {
+            width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255, 255, 255, 0.05); color: var(--text-primary); font-size: 16px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all .2s;
+        }
+        .fil-stock-btn:hover { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); transform: scale(1.05); }
+        .fil-stock-input {
+            width: 50px; text-align: center; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 6px; color: var(--text-primary); font-family: 'JetBrains Mono', monospace;
+            font-size: 13px; font-weight: 600; padding: 6px 4px;
+        }
+        .fil-stock-input:focus { outline: none; border-color: var(--accent-blue); }
+
+        /* ── TABS AND MODALS ──────────────── */
+        .tabs-header {
+            display: flex; gap: var(--space-md); margin-bottom: var(--space-lg); border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            overflow-x: auto; padding-bottom: 8px; align-items: center;
+        }
+        .tab-btn {
+            background: none; border: none; color: var(--text-muted); font-size: var(--fs-md); font-weight: 600;
+            cursor: pointer; padding: 8px 16px; border-radius: 8px; transition: all .2s;
+        }
+        .tab-btn:hover { color: var(--text-primary); background: rgba(255, 255, 255, 0.05); }
+        .tab-btn.active { color: var(--accent-blue); background: rgba(99, 102, 241, 0.1); }
+        .tab-content { display: none; animation: fadeIn .3s ease forwards; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+
+        .actions-bar { margin-left: auto; display: flex; gap: var(--space-sm); }
+
+        @media (max-width: 768px) {
+            .tabs-header {
+                flex-wrap: wrap;
+                overflow-x: visible;
+                gap: 8px;
+                padding-bottom: 12px;
+            }
+            .actions-bar {
+                margin-left: 0;
+                width: 100%;
+                justify-content: stretch;
+                margin-top: 8px;
+            }
+            .actions-bar .btn {
+                flex: 1;
+                font-size: 13px;
+                justify-content: center;
+            }
+            .tab-btn {
+                flex: 1;
+                min-width: 30%;
+                text-align: center;
+                font-size: 12px;
+                padding: 6px;
+            }
+        }
+
+        /* ── PURCHASE ENTRY MODAL ──────────────── */
+        .purchase-form {
+            display: flex; flex-direction: column; gap: var(--space-md);
+        }
+        .purchase-form label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); margin-bottom: 4px; display: block; }
+        .purchase-form select, .purchase-form input {
+            background: var(--bg-input); border: 1px solid var(--border-card); border-radius: 8px;
+            color: var(--text-primary); padding: 10px; font-size: 14px; font-family: 'DM Sans', sans-serif; width: 100%;
+            color-scheme: dark;
+        }
+        .purchase-form select:focus, .purchase-form input:focus { outline: none; border-color: var(--accent-blue); }
+
+        /* ── PURCHASE HISTORY ────────────── */
+        .history-table {
+            width: 100%; border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px;
+            overflow: hidden; backdrop-filter: blur(10px);
+        }
+        .history-table th {
+            font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+            color: var(--text-muted); text-align: left; padding: 16px;
+            background: rgba(0, 0, 0, 0.2); border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .history-table td {
+            padding: 16px; font-size: 14px; color: var(--text-secondary);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .history-table tr:last-child td { border-bottom: none; }
+        .history-table tr:hover td { background: rgba(255,255,255,.04); }
+        .history-delete {
+            background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 6px;
+            display: flex; align-items: center; transition: all .2s; border-radius: 6px;
+        }
+        .history-delete:hover { color: #f87171; background: rgba(239, 68, 68, 0.1); }
+        .history-empty {
+            text-align: center; padding: 40px; color: var(--text-muted); font-size: 14px;
+        }
+        
+        .stock-summary-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px; margin-bottom: 32px;
+        }
+        .stock-summary-card {
+            background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px;
+            padding: 20px; display: flex; align-items: center; gap: 16px; backdrop-filter: blur(10px);
+        }
+        .stock-summary-icon {
+            width: 48px; height: 48px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center; font-size: 24px;
+        }
+        .stock-summary-icon.green { background: rgba(16,185,129,.15); }
+        .stock-summary-icon.orange { background: rgba(249,115,22,.15); }
+        .stock-summary-icon.blue { background: rgba(99,102,241,.15); }
+        .stock-summary-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); margin-bottom: 4px; }
+        .stock-summary-value { font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 800; color: var(--text-primary); }
+    </style>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="bg-orb bg-orb-1"></div>
+        <div class="bg-orb bg-orb-2"></div>
+        <div class="bg-orb bg-orb-3"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="header" id="header">
+        <div class="header-content">
+            <div class="header-left">
+                <button class="menu-toggle" id="menuToggle" aria-label="Abrir menu principal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                <div class="logo">
+                    <svg class="logo-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20 2L36 11V29L20 38L4 29V11L20 2Z" stroke="url(#logoGrad)" stroke-width="2.5" fill="none"/>
+                        <path d="M20 8L30 14V26L20 32L10 26V14L20 8Z" fill="url(#logoGrad)" opacity="0.3"/>
+                        <path d="M20 14L25 17.5V24.5L20 28L15 24.5V17.5L20 14Z" fill="url(#logoGrad)" opacity="0.6"/>
+                        <defs>
+                            <linearGradient id="logoGrad" x1="4" y1="2" x2="36" y2="38">
+                                <stop offset="0%" stop-color="#6366f1"/>
+                                <stop offset="100%" stop-color="#a855f7"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div>
+                        <h1>Cadastro de Filamentos</h1>
+                        <p class="header-subtitle">Estoque & Preços</p>
+                    </div>
+                </div>
+            </div>
+            <div class="header-right">
+                <button class="btn-icon" id="themeToggle" title="Alternar tema" aria-label="Alternar tema">
+                    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                    </svg>
+                    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="filaments-container">
+
+        <!-- KPIs Principais -->
+        <div class="stock-summary-grid" id="filStockSummary"></div>
+
+        <!-- Abas e Ações -->
+        <div class="tabs-header">
+            <button class="tab-btn active" data-target="tab-estoque">Estoque Ativo</button>
+            <button class="tab-btn" data-target="tab-historico">Histórico de Compras</button>
+            <button class="tab-btn" data-target="tab-top50">Top 50 Comprados</button>
+            <div class="actions-bar">
+                <button class="btn btn-secondary" id="btnOpenPurchaseModal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                    Registrar Compra
+                </button>
+                <button class="btn btn-primary" id="btnOpenModal">+ Novo Filamento</button>
+            </div>
+        </div>
+
+        <!-- Form Modal -->
+        <div id="filamentModal" class="sidebar-overlay" style="display: none; align-items: center; justify-content: center; z-index: 2000;">
+            <section class="card filament-form-card" style="position: relative; top: auto; max-width: 450px; width: 90%; max-height: 90vh; overflow-y: auto;">
+                <div class="card-header" style="justify-content: space-between;">
+                    <h2>Novo Filamento</h2>
+                    <button class="btn-icon" id="btnCloseModal" type="button" aria-label="Fechar modal" style="width: 32px; height: 32px; border: none; background: transparent;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <div class="card-body">
+                <form id="filamentForm">
+                    <input type="hidden" id="filamentId">
+                    
+                    <div class="input-group">
+                        <label for="filBrand">Marca / Nome</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="filBrand" placeholder="Ex: Voolt3D, eSun..." required>
+                        </div>
+                    </div>
+                    
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label for="filMaterial">Material</label>
+                            <div class="input-wrapper">
+                                <select id="filMaterial" required>
+                                    <option value="PLA">PLA</option>
+                                    <option value="ABS">ABS</option>
+                                    <option value="PETG">PETG</option>
+                                    <option value="TPU">TPU</option>
+                                    <option value="Resina">Resina</option>
+                                    <option value="Outro">Outro</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="filColorName">Cor</label>
+                            <div class="input-wrapper">
+                                <input type="text" id="filColorName" placeholder="Ex: Preto" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="filColorHex">Amostra de Cor</label>
+                        <div class="input-wrapper" style="padding: 0; overflow: hidden;">
+                            <input type="color" id="filColorHex" value="#000000" style="width: 100%; height: 40px; border: none; cursor: pointer; background: transparent;">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="filWeight">Peso do Rolo (gramas)</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="filWeight" placeholder="1000" value="1000" min="1" required>
+                            <span class="input-suffix">g</span>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons" style="margin-top: var(--space-md);">
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Salvar Filamento</button>
+                        <button type="button" class="btn btn-secondary" id="btnCancelEdit" style="display: none; width: 100%;">Cancelar Edição</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+        </div>
+
+        <!-- Aba 1: Lista de Filamentos -->
+        <div class="tab-content active" id="tab-estoque">
+            <div class="filament-list" id="filamentList">
+                <!-- Cards will be rendered here -->
+            </div>
+        </div>
+
+        <!-- Aba 2: Histórico de Compras -->
+        <div class="tab-content" id="tab-historico">
+            <div id="purchaseHistory"></div>
+        </div>
+
+        <!-- Aba 3: Top 50 Comprados -->
+        <div class="tab-content" id="tab-top50">
+            <div id="top50Container"></div>
+        </div>
+
+        <!-- Modal de Registrar Compra -->
+        <div id="purchaseModal" class="sidebar-overlay" style="display: none; align-items: center; justify-content: center; z-index: 2000;">
+            <section class="card filament-form-card" style="position: relative; top: auto; max-width: 450px; width: 90%; background: var(--bg-card);">
+                <div class="card-header" style="justify-content: space-between;">
+                    <h2>Registrar Compra</h2>
+                    <button class="btn-icon" id="btnClosePurchaseModal" type="button" aria-label="Fechar modal" style="width: 32px; height: 32px; border: none; background: transparent;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <form id="purchaseForm" class="purchase-form">
+                        <div>
+                            <label for="purchaseFilament">Filamento Adquirido</label>
+                            <select id="purchaseFilament" required></select>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div>
+                                <label for="purchaseQty">Quantidade (Rolos)</label>
+                                <input type="number" id="purchaseQty" min="1" value="1" required>
+                            </div>
+                            <div>
+                                <label for="purchasePrice">Valor Total Pago (R$)</label>
+                                <input type="number" id="purchasePrice" min="0" step="0.01" placeholder="0,00" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 8px;">Confirmar Compra</button>
+                    </form>
+                </div>
+            </section>
+        </div>
+    </main>
+    <div class="drawer-overlay" id="drawerOverlay"></div>
+    <div class="app-drawer" id="appDrawer">
+        <div class="drawer-header">
+            <h2>Meus 3D</h2>
+            <button class="drawer-close" id="closeDrawer" aria-label="Fechar menu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <nav class="drawer-nav">
+            <a href="index.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                </svg>
+                Calculadora (1 Peça)
+            </a>
+            <a href="kit.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                Calculadora (Kits)
+            </a>
+            <a href="filamentos.html" class="drawer-nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                Cadastro de Filamentos
+            </a>
+            <a href="auxiliares.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+                Materiais Auxiliares
+            </a>
+                <a href="embalagens.html" class="drawer-nav-item">📦 Embalagens</a>
+            <a href="marketplaces.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                Canais de Venda
+            </a>
+            <a href="producao.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg>
+                Produção &amp; Projeções
+            </a>
+            <a href="produtos.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M3 9h18M3 15h18M9 3v18M15 3v18"></path></svg>
+                Estoque de Produtos
+            </a>
+            <a href="vendas.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                Registro de Vendas
+            </a>
+            <a href="curva_abc.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M3 3v18h18"/><path d="M7 14l5-5 4 4 5-9"/>
+                </svg>
+                Curva ABC
+            </a>
+            <a href="curva_abc_filamentos.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <circle cx="12" cy="12" r="10"></circle><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                </svg>
+                Curva ABC (Filamentos)
+            </a>
+            <a href="loja.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                Página de Vendas
+            </a>
+            <a href="falhas.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                Gestão de Falhas
+            </a>        
+            <a href="consignados.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                Locais Consignados
+            </a>
+            <a href="dre.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                DRE & Financeiro
+            </a>
+            <a href="maquinas.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <rect x="2" y="6" width="20" height="12" rx="2" ry="2"></rect><path d="M12 12v.01"></path><path d="M17 12v.01"></path><path d="M7 12v.01"></path>
+                </svg>
+                Máquinas &amp; Manutenção
+            </a>
+            <a href="trabalho.html" class="drawer-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M20 7h-3V4c0-1.1-.9-2-2-2H9c-1.1 0-2 .9-2 2v3H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zM9 4h6v3H9V4z"></path>
+                </svg>
+                Gestão de Trabalho
+            </a>
+        </nav>
+    </div>
+
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <script src="shared.js?v=1.3"></script>
+    <script src="script-filamentos.js?v=2"></script>
+</body>
+</html>
+
