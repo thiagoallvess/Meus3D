@@ -93,118 +93,130 @@ export default function MaquinasPage() {
       <div className="dashboard-grid">
         <div className="dashboard-column">
           <div className="card">
-            <h2>Nova Máquina</h2>
-            <form onSubmit={handleAddMachine} className="space-y-4 mt-4">
-              <div className="input-group">
-                <label htmlFor="name">Nome da Impressora</label>
-                <input
-                  type="text"
-                  id="name"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Ex: Ender 3 V3 KE"
-                  className="w-full bg-[var(--bg-input)]/50 border border-[var(--border-input)] rounded-xl p-3 text-[var(--text-primary)]"
-                />
-              </div>
+            <div className="card-header">
+              <h2>Nova Máquina</h2>
+            </div>
+            <div className="card-body">
+              <form onSubmit={handleAddMachine} className="space-y-4 mt-4">
+                <div className="input-group">
+                  <label htmlFor="name">Nome da Impressora</label>
+                  <div className="input-wrapper">
+                    <input
+                      type="text"
+                      id="name"
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Ex: Ender 3 V3 KE"
+                    />
+                  </div>
+                </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="input-group">
-                  <label htmlFor="purchasePrice">Valor Pago (R$)</label>
-                  <input
-                    type="number"
-                    id="purchasePrice"
-                    min="0"
-                    step="0.01"
-                    required
-                    value={purchasePrice}
-                    onChange={(e) => setPurchasePrice(Number(e.target.value))}
-                    className="w-full bg-[var(--bg-input)]/50 border border-[var(--border-input)] rounded-xl p-3 text-[var(--text-primary)]"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="input-group">
+                    <label htmlFor="purchasePrice">Valor Pago (R$)</label>
+                    <div className="input-wrapper">
+                      <input
+                        type="number"
+                        id="purchasePrice"
+                        min="0"
+                        step="0.01"
+                        required
+                        value={purchasePrice}
+                        onChange={(e) => setPurchasePrice(Number(e.target.value))}
+                      />
+                    </div>
+                  </div>
+                  <div className="input-group">
+                    <label htmlFor="powerWatts">Potência (W)</label>
+                    <div className="input-wrapper">
+                      <input
+                        type="number"
+                        id="powerWatts"
+                        min="0"
+                        step="1"
+                        required
+                        value={powerWatts}
+                        onChange={(e) => setPowerWatts(Number(e.target.value))}
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div className="input-group">
-                  <label htmlFor="powerWatts">Potência (W)</label>
-                  <input
-                    type="number"
-                    id="powerWatts"
-                    min="0"
-                    step="1"
-                    required
-                    value={powerWatts}
-                    onChange={(e) => setPowerWatts(Number(e.target.value))}
-                    className="w-full bg-[var(--bg-input)]/50 border border-[var(--border-input)] rounded-xl p-3 text-[var(--text-primary)]"
-                  />
-                </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="input-group">
-                  <label htmlFor="depreciationRate">Desgaste (R$/hora)</label>
-                  <input
-                    type="number"
-                    id="depreciationRate"
-                    min="0"
-                    step="0.01"
-                    required
-                    value={depreciationRate}
-                    onChange={(e) => setDepreciationRate(Number(e.target.value))}
-                    className="w-full bg-[var(--bg-input)]/50 border border-[var(--border-input)] rounded-xl p-3 text-[var(--text-primary)]"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="input-group">
+                    <label htmlFor="depreciationRate">Desgaste (R$/hora)</label>
+                    <div className="input-wrapper">
+                      <input
+                        type="number"
+                        id="depreciationRate"
+                        min="0"
+                        step="0.01"
+                        required
+                        value={depreciationRate}
+                        onChange={(e) => setDepreciationRate(Number(e.target.value))}
+                      />
+                    </div>
+                  </div>
+                  <div className="input-group">
+                    <label htmlFor="kwhCost">Energia (R$/kWh)</label>
+                    <div className="input-wrapper">
+                      <input
+                        type="number"
+                        id="kwhCost"
+                        min="0"
+                        step="0.01"
+                        required
+                        value={kwhCost}
+                        onChange={(e) => setKwhCost(Number(e.target.value))}
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div className="input-group">
-                  <label htmlFor="kwhCost">Energia (R$/kWh)</label>
-                  <input
-                    type="number"
-                    id="kwhCost"
-                    min="0"
-                    step="0.01"
-                    required
-                    value={kwhCost}
-                    onChange={(e) => setKwhCost(Number(e.target.value))}
-                    className="w-full bg-[var(--bg-input)]/50 border border-[var(--border-input)] rounded-xl p-3 text-[var(--text-primary)]"
-                  />
-                </div>
-              </div>
 
-              <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-xl w-full flex justify-center items-center gap-2 mt-4 transition-colors">
-                <Plus size={20} />
-                Adicionar Máquina
-              </button>
-            </form>
+                <button type="submit" className="btn btn-primary w-full mt-4">
+                  <Plus size={20} />
+                  Adicionar Máquina
+                </button>
+              </form>
+            </div>
           </div>
         </div>
 
         <div className="dashboard-column">
           <div className="card h-full">
-            <h2>Máquinas Cadastradas</h2>
-            
-            {loading ? (
-              <p className="text-[var(--text-muted)] mt-4">Carregando...</p>
-            ) : machines.length === 0 ? (
-              <p className="text-[var(--text-muted)] mt-4">Nenhuma máquina cadastrada.</p>
-            ) : (
-              <div className="mt-4 space-y-3 max-h-[600px] overflow-y-auto pr-2">
-                {machines.map((m) => (
-                  <div key={m.id} className="flex items-center justify-between p-4 border border-[var(--border-card)] rounded-xl bg-[var(--bg-body)]/50 backdrop-blur-sm">
-                    <div className="flex items-center gap-3">
-                      <div>
-                        <div className="font-bold text-[var(--text-primary)]">{m.name}</div>
-                        <div className="text-sm text-[var(--text-secondary)] mt-1">
-                          R$ {Number(m.purchase_price).toFixed(2)} • {m.power_watts}W
-                        </div>
-                        <div className="text-xs text-[var(--text-muted)] mt-1 flex gap-3">
-                          <span>Desgaste: R$ {Number(m.depreciation_rate).toFixed(2)}/h</span>
-                          <span>Energia: R$ {Number(m.kwh_cost).toFixed(2)}/kWh</span>
+            <div className="card-header">
+              <h2>Máquinas Cadastradas</h2>
+            </div>
+            <div className="card-body">
+              {loading ? (
+                <p className="text-[var(--text-muted)] mt-4">Carregando...</p>
+              ) : machines.length === 0 ? (
+                <p className="text-[var(--text-muted)] mt-4">Nenhuma máquina cadastrada.</p>
+              ) : (
+                <div className="mt-4 space-y-3 max-h-[600px] overflow-y-auto pr-2">
+                  {machines.map((m) => (
+                    <div key={m.id} className="flex items-center justify-between p-4 border border-[var(--border-card)] rounded-xl bg-[var(--bg-body)]/50 backdrop-blur-sm">
+                      <div className="flex items-center gap-3">
+                        <div>
+                          <div className="font-bold text-[var(--text-primary)]">{m.name}</div>
+                          <div className="text-sm text-[var(--text-secondary)] mt-1">
+                            R$ {Number(m.purchase_price).toFixed(2)} • {m.power_watts}W
+                          </div>
+                          <div className="text-xs text-[var(--text-muted)] mt-1 flex gap-3">
+                            <span>Desgaste: R$ {Number(m.depreciation_rate).toFixed(2)}/h</span>
+                            <span>Energia: R$ {Number(m.kwh_cost).toFixed(2)}/kWh</span>
+                          </div>
                         </div>
                       </div>
+                      <button onClick={() => handleDelete(m.id)} className="text-red-400 hover:text-red-300 p-2 bg-red-400/10 rounded-lg hover:bg-red-400/20 transition-colors">
+                        <Trash2 size={18} />
+                      </button>
                     </div>
-                    <button onClick={() => handleDelete(m.id)} className="text-red-400 hover:text-red-300 p-2 bg-red-400/10 rounded-lg hover:bg-red-400/20 transition-colors">
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
