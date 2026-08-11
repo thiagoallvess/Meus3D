@@ -185,16 +185,16 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-body)] flex items-center justify-center p-4 sm:p-8 overflow-hidden relative">
+    <div className="min-h-screen bg-[var(--bg-body)] flex items-center justify-center p-4 sm:p-8 relative">
       <ToastContainer />
       
       {/* Background Orbs for Premium Feel */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-0 pointer-events-none">
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-indigo-600/20 rounded-full blur-[100px]"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px]"></div>
       </div>
 
-      <div className="w-full max-w-[800px] bg-[var(--bg-card)]/80 backdrop-blur-xl border border-[var(--border-card)] rounded-[2rem] p-10 sm:p-14 shadow-2xl relative overflow-hidden z-10">
+      <div className="w-full max-w-[800px] bg-[var(--bg-card)]/80 backdrop-blur-xl border border-[var(--border-card)] rounded-[2rem] p-10 sm:p-14 shadow-2xl relative z-10 my-8">
         
         {/* Progress Header */}
         <div className="mb-12">
