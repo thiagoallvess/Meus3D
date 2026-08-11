@@ -35,17 +35,54 @@ export function useCalculatorData() {
         { data: mkt }
       ] = await Promise.all([
         supabase.from('machines').select('*').order('name'),
-        supabase.from('filaments').select('*').order('name'),
+        supabase.from('filaments').select('*').order('color_name'),
         supabase.from('auxiliaries').select('*').order('name'),
         supabase.from('packaging').select('*').order('name'),
         supabase.from('marketplaces').select('*').order('name')
       ]);
 
-      if (mac) setMachines(mac);
-      if (fil) setFilaments(fil);
-      if (aux) setAuxiliaries(aux);
-      if (pkg) setPackaging(pkg);
-      if (mkt) setMarketplaces(mkt);
+      if (mac) {
+        setMachines(mac.map(m => ({
+          id: m.id,
+          name: m.name,
+          power_watts: m.power_watts,
+          value: m.purchase_price,
+          life_hours: 0,
+          maintenance_cost_year: 0
+        })));
+      }
+      
+      if (fil) {
+        setFilaments(fil.map(f => ({
+          id: f.id,
+          name: `${f.material} ${f.color_name}`,
+          cost_kg: f.price / (f.weight / 1000), // convert price per spool to price per kg
+          empty_spool_weight: 200,
+          brand: f.brand
+        })));
+      }
+      
+      if (aux) {
+        setAuxiliaries(aux.map(a => ({
+          id: a.id,
+          name: a.name,
+          cost: a.unit_cost,
+          unit: 'un',
+          unit_size: 1
+        })));
+      }
+      
+      if (pkg) setPackaging(pkg as any[]);
+      
+      if (mkt) {
+        setMarketplaces(mkt.map(m => ({
+          id: m.id,
+          name: m.name,
+          fee_percentage: m.commission_rate,
+          fixed_fee: m.fixed_fee || 0,
+          free_shipping_cost: m.free_shipping_min || 0
+        })));
+      }
 
       setLoading(false);
     }

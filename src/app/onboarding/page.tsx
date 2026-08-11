@@ -87,7 +87,7 @@ export default function OnboardingPage() {
       // Salvar Filamento
       const priceNum = parseFloat(filPrice);
       if (filBrand && priceNum > 0) {
-        await supabase.from('filaments').insert({
+        const { error } = await supabase.from('filaments').insert({
           user_id: user.id,
           brand: filBrand,
           material: filMaterial,
@@ -96,26 +96,27 @@ export default function OnboardingPage() {
           weight: 1000,
           price: priceNum / filQty
         });
+        if (error) throw new Error('Erro filamento: ' + error.message);
       }
 
       // Salvar Auxiliar
       const auxPriceNum = parseFloat(auxPrice);
       if (auxName && auxPriceNum > 0) {
-        await supabase.from('auxiliaries').insert({
+        const { error } = await supabase.from('auxiliaries').insert({
           user_id: user.id,
           name: auxName,
           quantity: auxQty,
           total_cost: auxPriceNum,
           unit_cost: auxPriceNum / auxQty
         });
+        if (error) throw new Error('Erro auxiliar: ' + error.message);
       }
 
       // Salvar Marketplace
       const mpFeeNum = parseFloat(mpFee);
       const mpShippingNum = parseFloat(mpShipping);
       if (mpName) {
-        // Criar venda direta padrão também
-        await supabase.from('marketplaces').insert([
+        const { error } = await supabase.from('marketplaces').insert([
           {
             user_id: user.id,
             name: 'Venda Direta',
@@ -131,20 +132,22 @@ export default function OnboardingPage() {
             is_direct: false
           }
         ]);
+        if (error) throw new Error('Erro canais: ' + error.message);
       } else {
-        await supabase.from('marketplaces').insert({
+        const { error } = await supabase.from('marketplaces').insert({
           user_id: user.id,
           name: 'Venda Direta',
           commission_rate: 0,
           default_shipping: 0,
           is_direct: true
         });
+        if (error) throw new Error('Erro venda direta: ' + error.message);
       }
 
       // Salvar Máquina
       const macPriceNum = parseFloat(macPrice);
       if (macName) {
-        await supabase.from('machines').insert({
+        const { error } = await supabase.from('machines').insert({
           user_id: user.id,
           name: macName,
           purchase_price: macPriceNum,
@@ -152,11 +155,13 @@ export default function OnboardingPage() {
           depreciation_rate: macDep,
           kwh_cost: macKwh
         });
+        if (error) throw new Error('Erro maquina: ' + error.message);
       }
 
       // Atualizar perfil
-      await supabase.from('user_profiles')
+      const { error: profileError } = await supabase.from('user_profiles')
         .upsert({ id: user.id, onboarding_done: true });
+      if (profileError) throw new Error('Erro perfil: ' + profileError.message);
 
       await checkOnboardingStatus();
       
