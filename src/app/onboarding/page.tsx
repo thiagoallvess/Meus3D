@@ -332,12 +332,17 @@ export default function OnboardingPage() {
               >
                 ← Voltar
               </button>
-              <button 
-                onClick={() => { if (validateStep2()) nextStep(); }}
-                className="bg-indigo-600 text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:-translate-y-1 hover:bg-indigo-500 hover:shadow-indigo-500/30 transition-all flex items-center gap-2"
-              >
-                Próximo Passo →
-              </button>
+              <div className="flex gap-4 items-center">
+                <button onClick={nextStep} className="text-sm font-semibold text-[var(--text-muted)] underline hover:text-[var(--text-primary)] transition-colors">
+                  Pular etapa
+                </button>
+                <button 
+                  onClick={() => { if (validateStep2()) nextStep(); }}
+                  className="bg-indigo-600 text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:-translate-y-1 hover:bg-indigo-500 hover:shadow-indigo-500/30 transition-all flex items-center gap-2"
+                >
+                  Próximo Passo →
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -560,13 +565,36 @@ export default function OnboardingPage() {
               >
                 ← Voltar
               </button>
-              <button 
-                onClick={finishOnboarding}
-                disabled={loading}
-                className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold py-4 px-10 rounded-2xl shadow-xl hover:-translate-y-1 hover:shadow-emerald-500/40 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? 'Salvando...' : 'Finalizar Setup ✨'}
-              </button>
+              <div className="flex gap-4 items-center">
+                <button 
+                  onClick={async () => {
+                    setLoading(true);
+                    try {
+                      // Se pulou, ao menos garantir que o perfil atualiza
+                      const { error: profileError } = await supabase.from('user_profiles')
+                        .upsert({ id: user.id, onboarding_done: true });
+                      if (profileError) throw new Error(profileError.message);
+                      await checkOnboardingStatus();
+                      shootConfetti();
+                      nextStep();
+                    } catch (error) {
+                      console.error(error);
+                    } finally {
+                      setLoading(false);
+                    }
+                  }} 
+                  className="text-sm font-semibold text-[var(--text-muted)] underline hover:text-[var(--text-primary)] transition-colors"
+                >
+                  Pular e Concluir
+                </button>
+                <button 
+                  onClick={finishOnboarding}
+                  disabled={loading}
+                  className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold py-4 px-10 rounded-2xl shadow-xl hover:-translate-y-1 hover:shadow-emerald-500/40 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? 'Salvando...' : 'Finalizar Setup ✨'}
+                </button>
+              </div>
             </div>
           </div>
         )}
