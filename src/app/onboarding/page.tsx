@@ -185,133 +185,153 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-body)] flex items-center justify-center p-4 overflow-hidden relative">
+    <div className="min-h-screen bg-[var(--bg-body)] flex items-center justify-center p-4 sm:p-8 overflow-hidden relative">
       <ToastContainer />
       
-      <div className="w-full max-w-[600px] bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-10 shadow-2xl relative overflow-hidden z-10">
-        <div className="w-full h-2 bg-[var(--bg-input)] rounded-full mb-10 overflow-hidden">
-          <div 
-            className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500 ease-in-out" 
-            style={{ width: `${percentage}%` }}
-          />
+      {/* Background Orbs for Premium Feel */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-0 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-indigo-600/20 rounded-full blur-[100px]"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px]"></div>
+      </div>
+
+      <div className="w-full max-w-[800px] bg-[var(--bg-card)]/80 backdrop-blur-xl border border-[var(--border-card)] rounded-[2rem] p-10 sm:p-14 shadow-2xl relative overflow-hidden z-10">
+        
+        {/* Progress Header */}
+        <div className="mb-12">
+          <div className="flex justify-between items-center mb-4">
+            <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest">
+              Passo {currentStep} de {totalSteps}
+            </span>
+            <span className="text-xs font-bold text-[var(--text-muted)]">
+              {Math.round(percentage)}% Completo
+            </span>
+          </div>
+          <div className="w-full h-2.5 bg-[var(--bg-input)] rounded-full overflow-hidden shadow-inner">
+            <div 
+              className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-700 ease-out" 
+              style={{ width: `${percentage}%` }}
+            />
+          </div>
         </div>
 
         {/* Step 1 */}
         {currentStep === 1 && (
-          <div className="animate-fade-in-up">
-            <div className="text-6xl text-center mb-6 animate-bounce">👋 🏭</div>
-            <h1 className="text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-indigo-300 text-center flex items-center justify-center gap-3">
+          <div className="animate-fade-in-up flex flex-col items-center text-center py-10">
+            <div className="text-8xl mb-8 animate-bounce" style={{ animationDuration: '3s' }}>👋 🏭</div>
+            <h1 className="text-5xl font-extrabold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white to-indigo-300 leading-tight">
               Bem-vindo ao Meus 3D!
             </h1>
-            <p className="text-[var(--text-secondary)] text-center text-lg mb-8 leading-relaxed">
-              Chega de planilhas confusas! Vamos configurar a sua fábrica de impressão 3D em <strong className="text-white">menos de 2 minutos</strong>.
+            <p className="text-[var(--text-secondary)] text-xl mb-12 leading-relaxed max-w-2xl">
+              Chega de planilhas confusas e cálculos errados! Vamos configurar a sua fábrica de impressão 3D com precisão em <strong className="text-white font-bold">menos de 2 minutos</strong>.
             </p>
-            <div className="flex justify-center mt-10">
-              <button 
-                onClick={nextStep}
-                className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:-translate-y-1 hover:shadow-indigo-500/30 transition-all"
-              >
-                Começar Aventura 🚀
-              </button>
-            </div>
+            <button 
+              onClick={nextStep}
+              className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold text-lg py-4 px-12 rounded-2xl shadow-xl shadow-indigo-500/20 hover:-translate-y-1 hover:shadow-indigo-500/40 hover:scale-105 transition-all duration-300"
+            >
+              Começar Aventura 🚀
+            </button>
           </div>
         )}
 
         {/* Step 2 */}
         {currentStep === 2 && (
           <div className="animate-fade-in-up">
-            <h1 className="text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-indigo-300">
+            <h1 className="text-4xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-indigo-300">
               🧵 Seu Primeiro Filamento
             </h1>
-            <p className="text-[var(--text-secondary)] text-base mb-6">
-              Qual é o rolo que você mais usa? Vamos cadastrá-lo e simular sua primeira compra.
+            <p className="text-[var(--text-secondary)] text-lg mb-10">
+              Qual é o rolo que você mais usa? Vamos cadastrá-lo e simular sua primeira compra no sistema.
             </p>
             
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-[var(--text-secondary)]">Marca (Ex: Voolt, Esun)</label>
-                <input 
-                  type="text" 
-                  value={filBrand}
-                  onChange={e => setFilBrand(e.target.value)}
-                  placeholder="Marca" 
-                  className="w-full bg-[var(--bg-input)] border border-[var(--border-input)] rounded-xl p-3 text-[var(--text-primary)] outline-none focus:border-indigo-500 transition-colors"
-                />
+            <div className="space-y-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                <div className="flex flex-col gap-3">
+                  <label className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-wide">Marca (Ex: Voolt, Esun)</label>
+                  <input 
+                    type="text" 
+                    value={filBrand}
+                    onChange={e => setFilBrand(e.target.value)}
+                    placeholder="Nome da Marca" 
+                    className="w-full bg-[var(--bg-input)]/50 border border-[var(--border-input)] rounded-2xl p-4 text-[var(--text-primary)] text-lg outline-none focus:border-indigo-500 focus:bg-[var(--bg-input)] transition-all shadow-inner"
+                  />
+                </div>
+                <div className="flex flex-col gap-3">
+                  <label className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-wide">Material</label>
+                  <select 
+                    value={filMaterial}
+                    onChange={e => setFilMaterial(e.target.value)}
+                    className="w-full bg-[var(--bg-input)]/50 border border-[var(--border-input)] rounded-2xl p-4 text-[var(--text-primary)] text-lg outline-none focus:border-indigo-500 focus:bg-[var(--bg-input)] transition-all shadow-inner appearance-none cursor-pointer"
+                  >
+                    <option value="PLA">PLA</option>
+                    <option value="PETG">PETG</option>
+                    <option value="ABS">ABS</option>
+                    <option value="TPU">TPU</option>
+                    <option value="Tritan">Tritan (HT)</option>
+                  </select>
+                </div>
               </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-[var(--text-secondary)]">Material</label>
-                <select 
-                  value={filMaterial}
-                  onChange={e => setFilMaterial(e.target.value)}
-                  className="w-full bg-[var(--bg-input)] border border-[var(--border-input)] rounded-xl p-3 text-[var(--text-primary)] outline-none focus:border-indigo-500 transition-colors"
-                >
-                  <option value="PLA">PLA</option>
-                  <option value="PETG">PETG</option>
-                  <option value="ABS">ABS</option>
-                  <option value="TPU">TPU</option>
-                  <option value="Tritan">Tritan (HT)</option>
-                </select>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                <div className="flex flex-col gap-3">
+                  <label className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-wide">Cor do Rolo</label>
+                  <input 
+                    type="text" 
+                    value={filColorName}
+                    onChange={e => setFilColorName(e.target.value)}
+                    placeholder="Ex: Preto Galáxia" 
+                    className="w-full bg-[var(--bg-input)]/50 border border-[var(--border-input)] rounded-2xl p-4 text-[var(--text-primary)] text-lg outline-none focus:border-indigo-500 focus:bg-[var(--bg-input)] transition-all shadow-inner"
+                  />
+                </div>
+                <div className="flex flex-col gap-3">
+                  <label className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-wide">Cor Visual (Opcional)</label>
+                  <div className="relative">
+                    <input 
+                      type="color" 
+                      value={filColorHex}
+                      onChange={e => setFilColorHex(e.target.value)}
+                      className="w-full bg-[var(--bg-input)]/50 border border-[var(--border-input)] rounded-2xl h-[60px] p-2 cursor-pointer outline-none focus:border-indigo-500 transition-all shadow-inner"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                <div className="flex flex-col gap-3">
+                  <label className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-wide">Quantidade de Rolos</label>
+                  <input 
+                    type="number" 
+                    min="1"
+                    value={filQty}
+                    onChange={e => setFilQty(parseInt(e.target.value) || 0)}
+                    className="w-full bg-[var(--bg-input)]/50 border border-[var(--border-input)] rounded-2xl p-4 text-[var(--text-primary)] text-lg outline-none focus:border-indigo-500 focus:bg-[var(--bg-input)] transition-all shadow-inner"
+                  />
+                </div>
+                <div className="flex flex-col gap-3">
+                  <label className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-wide">Preço Total Pago (R$)</label>
+                  <input 
+                    type="number" 
+                    step="0.01"
+                    placeholder="Ex: 89.90"
+                    value={filPrice}
+                    onChange={e => setFilPrice(e.target.value)}
+                    className="w-full bg-[var(--bg-input)]/50 border border-[var(--border-input)] rounded-2xl p-4 text-[var(--text-primary)] text-lg outline-none focus:border-indigo-500 focus:bg-[var(--bg-input)] transition-all shadow-inner"
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-[var(--text-secondary)]">Cor do Rolo</label>
-                <input 
-                  type="text" 
-                  value={filColorName}
-                  onChange={e => setFilColorName(e.target.value)}
-                  placeholder="Ex: Preto Galáxia" 
-                  className="w-full bg-[var(--bg-input)] border border-[var(--border-input)] rounded-xl p-3 text-[var(--text-primary)] outline-none focus:border-indigo-500 transition-colors"
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-[var(--text-secondary)]">Cor (Visual)</label>
-                <input 
-                  type="color" 
-                  value={filColorHex}
-                  onChange={e => setFilColorHex(e.target.value)}
-                  className="w-full bg-[var(--bg-input)] border border-[var(--border-input)] rounded-xl h-12 p-1 cursor-pointer outline-none focus:border-indigo-500 transition-colors"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-[var(--text-secondary)]">Quantos rolos você tem?</label>
-                <input 
-                  type="number" 
-                  min="1"
-                  value={filQty}
-                  onChange={e => setFilQty(parseInt(e.target.value) || 0)}
-                  className="w-full bg-[var(--bg-input)] border border-[var(--border-input)] rounded-xl p-3 text-[var(--text-primary)] outline-none focus:border-indigo-500 transition-colors"
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-[var(--text-secondary)]">Preço Total (R$)</label>
-                <input 
-                  type="number" 
-                  step="0.01"
-                  placeholder="Ex: 89.90"
-                  value={filPrice}
-                  onChange={e => setFilPrice(e.target.value)}
-                  className="w-full bg-[var(--bg-input)] border border-[var(--border-input)] rounded-xl p-3 text-[var(--text-primary)] outline-none focus:border-indigo-500 transition-colors"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-between mt-10">
+            <div className="flex justify-between items-center mt-12 pt-8 border-t border-[var(--border-card)]">
               <button 
                 onClick={prevStep}
-                className="bg-transparent border border-[var(--border-card)] text-[var(--text-secondary)] font-bold py-3 px-6 rounded-xl hover:bg-[var(--bg-input)] hover:text-[var(--text-primary)] transition-all"
+                className="text-[var(--text-secondary)] font-bold py-3 px-6 rounded-xl hover:bg-[var(--bg-input)] hover:text-white transition-all"
               >
-                Voltar
+                ← Voltar
               </button>
               <button 
                 onClick={() => { if (validateStep2()) nextStep(); }}
-                className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:-translate-y-1 hover:shadow-indigo-500/30 transition-all flex items-center gap-2"
+                className="bg-indigo-600 text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:-translate-y-1 hover:bg-indigo-500 hover:shadow-indigo-500/30 transition-all flex items-center gap-2"
               >
-                Próximo ➡️
+                Próximo Passo →
               </button>
             </div>
           </div>
@@ -320,64 +340,66 @@ export default function OnboardingPage() {
         {/* Step 3 */}
         {currentStep === 3 && (
           <div className="animate-fade-in-up">
-            <h1 className="text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-indigo-300">
+            <h1 className="text-4xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-indigo-300">
               📦 Materiais Auxiliares
             </h1>
-            <p className="text-[var(--text-secondary)] text-base mb-6">
-              O que mais você gasta? Caixas de papelão? Ímãs? Plástico bolha?
+            <p className="text-[var(--text-secondary)] text-lg mb-10">
+              Além do filamento, o que mais você gasta? Caixas de papelão? Ímãs? Plástico bolha? Registre o seu principal.
             </p>
             
-            <div className="flex flex-col gap-2 mb-4">
-              <label className="text-sm font-semibold text-[var(--text-secondary)]">Nome do Material (Ex: Caixa 16x11x6)</label>
-              <input 
-                type="text" 
-                placeholder="Nome"
-                value={auxName}
-                onChange={e => setAuxName(e.target.value)}
-                className="w-full bg-[var(--bg-input)] border border-[var(--border-input)] rounded-xl p-3 text-[var(--text-primary)] outline-none focus:border-indigo-500 transition-colors"
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-[var(--text-secondary)]">Quantidade Comprada</label>
+            <div className="space-y-8">
+              <div className="flex flex-col gap-3">
+                <label className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-wide">Nome do Material (Ex: Caixa 16x11x6)</label>
                 <input 
-                  type="number" 
-                  min="1"
-                  value={auxQty}
-                  onChange={e => setAuxQty(parseInt(e.target.value) || 0)}
-                  className="w-full bg-[var(--bg-input)] border border-[var(--border-input)] rounded-xl p-3 text-[var(--text-primary)] outline-none focus:border-indigo-500 transition-colors"
+                  type="text" 
+                  placeholder="Nome"
+                  value={auxName}
+                  onChange={e => setAuxName(e.target.value)}
+                  className="w-full bg-[var(--bg-input)]/50 border border-[var(--border-input)] rounded-2xl p-4 text-[var(--text-primary)] text-lg outline-none focus:border-indigo-500 focus:bg-[var(--bg-input)] transition-all shadow-inner"
                 />
               </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-[var(--text-secondary)]">Custo Total (R$)</label>
-                <input 
-                  type="number" 
-                  step="0.01"
-                  placeholder="Ex: 45.00"
-                  value={auxPrice}
-                  onChange={e => setAuxPrice(e.target.value)}
-                  className="w-full bg-[var(--bg-input)] border border-[var(--border-input)] rounded-xl p-3 text-[var(--text-primary)] outline-none focus:border-indigo-500 transition-colors"
-                />
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                <div className="flex flex-col gap-3">
+                  <label className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-wide">Quantidade Comprada</label>
+                  <input 
+                    type="number" 
+                    min="1"
+                    value={auxQty}
+                    onChange={e => setAuxQty(parseInt(e.target.value) || 0)}
+                    className="w-full bg-[var(--bg-input)]/50 border border-[var(--border-input)] rounded-2xl p-4 text-[var(--text-primary)] text-lg outline-none focus:border-indigo-500 focus:bg-[var(--bg-input)] transition-all shadow-inner"
+                  />
+                </div>
+                <div className="flex flex-col gap-3">
+                  <label className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-wide">Custo Total (R$)</label>
+                  <input 
+                    type="number" 
+                    step="0.01"
+                    placeholder="Ex: 45.00"
+                    value={auxPrice}
+                    onChange={e => setAuxPrice(e.target.value)}
+                    className="w-full bg-[var(--bg-input)]/50 border border-[var(--border-input)] rounded-2xl p-4 text-[var(--text-primary)] text-lg outline-none focus:border-indigo-500 focus:bg-[var(--bg-input)] transition-all shadow-inner"
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="flex justify-between mt-10">
+            <div className="flex justify-between items-center mt-12 pt-8 border-t border-[var(--border-card)]">
               <button 
                 onClick={prevStep}
-                className="bg-transparent border border-[var(--border-card)] text-[var(--text-secondary)] font-bold py-3 px-6 rounded-xl hover:bg-[var(--bg-input)] hover:text-[var(--text-primary)] transition-all"
+                className="text-[var(--text-secondary)] font-bold py-3 px-6 rounded-xl hover:bg-[var(--bg-input)] hover:text-white transition-all"
               >
-                Voltar
+                ← Voltar
               </button>
               <div className="flex gap-4 items-center">
-                <button onClick={nextStep} className="text-sm text-[var(--text-muted)] underline hover:text-[var(--text-primary)] transition-colors">
-                  Pular este
+                <button onClick={nextStep} className="text-sm font-semibold text-[var(--text-muted)] underline hover:text-[var(--text-primary)] transition-colors">
+                  Pular etapa
                 </button>
                 <button 
                   onClick={() => { if (validateStep3()) nextStep(); }}
-                  className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:-translate-y-1 hover:shadow-indigo-500/30 transition-all flex items-center gap-2"
+                  className="bg-indigo-600 text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:-translate-y-1 hover:bg-indigo-500 hover:shadow-indigo-500/30 transition-all flex items-center gap-2"
                 >
-                  Próximo ➡️
+                  Próximo Passo →
                 </button>
               </div>
             </div>
@@ -387,65 +409,67 @@ export default function OnboardingPage() {
         {/* Step 4 */}
         {currentStep === 4 && (
           <div className="animate-fade-in-up">
-            <h1 className="text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-indigo-300">
-              🛒 Onde você vende?
+            <h1 className="text-4xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-indigo-300">
+              🛒 Canais de Venda
             </h1>
-            <p className="text-[var(--text-secondary)] text-base mb-6">
-              Cadastre o seu principal marketplace ou loja para calcularmos a comissão automaticamente.
+            <p className="text-[var(--text-secondary)] text-lg mb-10">
+              Onde você vende suas peças? Cadastre o seu principal marketplace ou loja para calcularmos a comissão automaticamente.
             </p>
             
-            <div className="flex flex-col gap-2 mb-4">
-              <label className="text-sm font-semibold text-[var(--text-secondary)]">Nome do Canal (Ex: Shopee)</label>
-              <input 
-                type="text" 
-                placeholder="Nome"
-                value={mpName}
-                onChange={e => setMpName(e.target.value)}
-                className="w-full bg-[var(--bg-input)] border border-[var(--border-input)] rounded-xl p-3 text-[var(--text-primary)] outline-none focus:border-indigo-500 transition-colors"
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-[var(--text-secondary)]">Comissão (%)</label>
+            <div className="space-y-8">
+              <div className="flex flex-col gap-3">
+                <label className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-wide">Nome do Canal (Ex: Shopee, Mercado Livre)</label>
                 <input 
-                  type="number" 
-                  step="0.1"
-                  placeholder="Ex: 14"
-                  value={mpFee}
-                  onChange={e => setMpFee(e.target.value)}
-                  className="w-full bg-[var(--bg-input)] border border-[var(--border-input)] rounded-xl p-3 text-[var(--text-primary)] outline-none focus:border-indigo-500 transition-colors"
+                  type="text" 
+                  placeholder="Nome do Canal"
+                  value={mpName}
+                  onChange={e => setMpName(e.target.value)}
+                  className="w-full bg-[var(--bg-input)]/50 border border-[var(--border-input)] rounded-2xl p-4 text-[var(--text-primary)] text-lg outline-none focus:border-indigo-500 focus:bg-[var(--bg-input)] transition-all shadow-inner"
                 />
               </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-[var(--text-secondary)]">Frete Fixo (R$)</label>
-                <input 
-                  type="number" 
-                  step="0.01"
-                  placeholder="Ex: 3.00"
-                  value={mpShipping}
-                  onChange={e => setMpShipping(e.target.value)}
-                  className="w-full bg-[var(--bg-input)] border border-[var(--border-input)] rounded-xl p-3 text-[var(--text-primary)] outline-none focus:border-indigo-500 transition-colors"
-                />
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                <div className="flex flex-col gap-3">
+                  <label className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-wide">Comissão do Canal (%)</label>
+                  <input 
+                    type="number" 
+                    step="0.1"
+                    placeholder="Ex: 14"
+                    value={mpFee}
+                    onChange={e => setMpFee(e.target.value)}
+                    className="w-full bg-[var(--bg-input)]/50 border border-[var(--border-input)] rounded-2xl p-4 text-[var(--text-primary)] text-lg outline-none focus:border-indigo-500 focus:bg-[var(--bg-input)] transition-all shadow-inner"
+                  />
+                </div>
+                <div className="flex flex-col gap-3">
+                  <label className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-wide">Frete Fixo Descontado (R$)</label>
+                  <input 
+                    type="number" 
+                    step="0.01"
+                    placeholder="Ex: 3.00"
+                    value={mpShipping}
+                    onChange={e => setMpShipping(e.target.value)}
+                    className="w-full bg-[var(--bg-input)]/50 border border-[var(--border-input)] rounded-2xl p-4 text-[var(--text-primary)] text-lg outline-none focus:border-indigo-500 focus:bg-[var(--bg-input)] transition-all shadow-inner"
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="flex justify-between mt-10">
+            <div className="flex justify-between items-center mt-12 pt-8 border-t border-[var(--border-card)]">
               <button 
                 onClick={prevStep}
-                className="bg-transparent border border-[var(--border-card)] text-[var(--text-secondary)] font-bold py-3 px-6 rounded-xl hover:bg-[var(--bg-input)] hover:text-[var(--text-primary)] transition-all"
+                className="text-[var(--text-secondary)] font-bold py-3 px-6 rounded-xl hover:bg-[var(--bg-input)] hover:text-white transition-all"
               >
-                Voltar
+                ← Voltar
               </button>
               <div className="flex gap-4 items-center">
-                <button onClick={nextStep} className="text-sm text-[var(--text-muted)] underline hover:text-[var(--text-primary)] transition-colors">
-                  Pular este
+                <button onClick={nextStep} className="text-sm font-semibold text-[var(--text-muted)] underline hover:text-[var(--text-primary)] transition-colors">
+                  Pular etapa
                 </button>
                 <button 
                   onClick={() => { if (validateStep4()) nextStep(); }}
-                  className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:-translate-y-1 hover:shadow-indigo-500/30 transition-all flex items-center gap-2"
+                  className="bg-indigo-600 text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:-translate-y-1 hover:bg-indigo-500 hover:shadow-indigo-500/30 transition-all flex items-center gap-2"
                 >
-                  Próximo ➡️
+                  Próximo Passo →
                 </button>
               </div>
             </div>
@@ -455,86 +479,88 @@ export default function OnboardingPage() {
         {/* Step 5 */}
         {currentStep === 5 && (
           <div className="animate-fade-in-up">
-            <h1 className="text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-indigo-300">
+            <h1 className="text-4xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-indigo-300">
               🖨️ A Estrela do Show
             </h1>
-            <p className="text-[var(--text-secondary)] text-base mb-6">
-              Cadastre sua impressora para calcularmos a energia e o desgaste perfeitamente.
+            <p className="text-[var(--text-secondary)] text-lg mb-10">
+              Cadastre sua impressora 3D para calcularmos o consumo de energia e o desgaste da máquina perfeitamente.
             </p>
             
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-[var(--text-secondary)]">Nome da Impressora</label>
-                <input 
-                  type="text" 
-                  placeholder="Ex: Ender 3 V2"
-                  value={macName}
-                  onChange={e => setMacName(e.target.value)}
-                  className="w-full bg-[var(--bg-input)] border border-[var(--border-input)] rounded-xl p-3 text-[var(--text-primary)] outline-none focus:border-indigo-500 transition-colors"
-                />
+            <div className="space-y-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                <div className="flex flex-col gap-3">
+                  <label className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-wide">Nome da Impressora</label>
+                  <input 
+                    type="text" 
+                    placeholder="Ex: Ender 3 V3 KE, Bambu P1S"
+                    value={macName}
+                    onChange={e => setMacName(e.target.value)}
+                    className="w-full bg-[var(--bg-input)]/50 border border-[var(--border-input)] rounded-2xl p-4 text-[var(--text-primary)] text-lg outline-none focus:border-indigo-500 focus:bg-[var(--bg-input)] transition-all shadow-inner"
+                  />
+                </div>
+                <div className="flex flex-col gap-3">
+                  <label className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-wide">Valor Pago (R$)</label>
+                  <input 
+                    type="number" 
+                    step="0.01"
+                    placeholder="Ex: 2500.00"
+                    value={macPrice}
+                    onChange={e => setMacPrice(e.target.value)}
+                    className="w-full bg-[var(--bg-input)]/50 border border-[var(--border-input)] rounded-2xl p-4 text-[var(--text-primary)] text-lg outline-none focus:border-indigo-500 focus:bg-[var(--bg-input)] transition-all shadow-inner"
+                  />
+                </div>
               </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-[var(--text-secondary)]">Valor (R$)</label>
-                <input 
-                  type="number" 
-                  step="0.01"
-                  placeholder="Ex: 1500.00"
-                  value={macPrice}
-                  onChange={e => setMacPrice(e.target.value)}
-                  className="w-full bg-[var(--bg-input)] border border-[var(--border-input)] rounded-xl p-3 text-[var(--text-primary)] outline-none focus:border-indigo-500 transition-colors"
-                />
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                <div className="flex flex-col gap-3">
+                  <label className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-wide">Potência Média (Watts)</label>
+                  <input 
+                    type="number" 
+                    value={macWatts}
+                    onChange={e => setMacWatts(parseFloat(e.target.value) || 0)}
+                    className="w-full bg-[var(--bg-input)]/50 border border-[var(--border-input)] rounded-2xl p-4 text-[var(--text-primary)] text-lg outline-none focus:border-indigo-500 focus:bg-[var(--bg-input)] transition-all shadow-inner"
+                  />
+                </div>
+                <div className="flex flex-col gap-3">
+                  <label className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-wide">Custo de Desgaste (R$/hora)</label>
+                  <input 
+                    type="number" 
+                    step="0.01"
+                    value={macDep}
+                    onChange={e => setMacDep(parseFloat(e.target.value) || 0)}
+                    className="w-full bg-[var(--bg-input)]/50 border border-[var(--border-input)] rounded-2xl p-4 text-[var(--text-primary)] text-lg outline-none focus:border-indigo-500 focus:bg-[var(--bg-input)] transition-all shadow-inner"
+                  />
+                </div>
               </div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-[var(--text-secondary)]">Potência (Watts)</label>
-                <input 
-                  type="number" 
-                  value={macWatts}
-                  onChange={e => setMacWatts(parseFloat(e.target.value) || 0)}
-                  className="w-full bg-[var(--bg-input)] border border-[var(--border-input)] rounded-xl p-3 text-[var(--text-primary)] outline-none focus:border-indigo-500 transition-colors"
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-[var(--text-secondary)]">Desgaste (R$/h)</label>
-                <input 
-                  type="number" 
-                  step="0.01"
-                  value={macDep}
-                  onChange={e => setMacDep(parseFloat(e.target.value) || 0)}
-                  className="w-full bg-[var(--bg-input)] border border-[var(--border-input)] rounded-xl p-3 text-[var(--text-primary)] outline-none focus:border-indigo-500 transition-colors"
-                />
-              </div>
-            </div>
-            
-            <div className="w-1/2 pr-2 mb-4">
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-[var(--text-secondary)]">Valor do kWh (R$)</label>
-                <input 
-                  type="number" 
-                  step="0.01"
-                  value={macKwh}
-                  onChange={e => setMacKwh(parseFloat(e.target.value) || 0)}
-                  className="w-full bg-[var(--bg-input)] border border-[var(--border-input)] rounded-xl p-3 text-[var(--text-primary)] outline-none focus:border-indigo-500 transition-colors"
-                />
+              
+              <div className="w-full sm:w-1/2 pr-0 sm:pr-4">
+                <div className="flex flex-col gap-3">
+                  <label className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-wide">Custo de Energia Local (R$/kWh)</label>
+                  <input 
+                    type="number" 
+                    step="0.01"
+                    value={macKwh}
+                    onChange={e => setMacKwh(parseFloat(e.target.value) || 0)}
+                    className="w-full bg-[var(--bg-input)]/50 border border-[var(--border-input)] rounded-2xl p-4 text-[var(--text-primary)] text-lg outline-none focus:border-indigo-500 focus:bg-[var(--bg-input)] transition-all shadow-inner"
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="flex justify-between mt-10">
+            <div className="flex justify-between items-center mt-12 pt-8 border-t border-[var(--border-card)]">
               <button 
                 onClick={prevStep}
-                className="bg-transparent border border-[var(--border-card)] text-[var(--text-secondary)] font-bold py-3 px-6 rounded-xl hover:bg-[var(--bg-input)] hover:text-[var(--text-primary)] transition-all"
+                className="text-[var(--text-secondary)] font-bold py-3 px-6 rounded-xl hover:bg-[var(--bg-input)] hover:text-white transition-all"
                 disabled={loading}
               >
-                Voltar
+                ← Voltar
               </button>
               <button 
                 onClick={finishOnboarding}
                 disabled={loading}
-                className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:-translate-y-1 hover:shadow-indigo-500/30 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold py-4 px-10 rounded-2xl shadow-xl hover:-translate-y-1 hover:shadow-emerald-500/40 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? 'Salvando...' : 'Tudo Pronto! ✨'}
+                {loading ? 'Salvando...' : 'Finalizar Setup ✨'}
               </button>
             </div>
           </div>
@@ -542,36 +568,34 @@ export default function OnboardingPage() {
 
         {/* Step 6 */}
         {currentStep === 6 && (
-          <div className="animate-fade-in-up">
-            <div className="text-6xl text-center mb-6">🎉 🏆</div>
-            <h1 className="text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-indigo-300 text-center">
+          <div className="animate-fade-in-up flex flex-col items-center text-center py-10">
+            <div className="text-8xl mb-8 animate-bounce" style={{ animationDuration: '2.5s' }}>🎉 🏆</div>
+            <h1 className="text-5xl font-extrabold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white to-indigo-300">
               Fábrica Configurada!
             </h1>
-            <p className="text-[var(--text-secondary)] text-center text-lg mb-8">
-              Tudo foi salvo no seu banco de dados. Você está pronto para precificar peças com lucro máximo!
+            <p className="text-[var(--text-secondary)] text-xl mb-12 max-w-2xl leading-relaxed">
+              Incrível! Todos os dados da sua base foram salvos com sucesso na nuvem. Você está pronto para precificar suas impressões 3D garantindo <strong className="text-white">lucro máximo</strong> em cada peça.
             </p>
-            <div className="flex justify-center mt-10">
-              <button 
-                onClick={() => router.push('/')}
-                className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:-translate-y-1 hover:shadow-indigo-500/30 transition-all"
-              >
-                Ir para a Calculadora 🚀
-              </button>
-            </div>
+            <button 
+              onClick={() => router.push('/')}
+              className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold text-lg py-4 px-12 rounded-2xl shadow-xl shadow-indigo-500/20 hover:-translate-y-1 hover:shadow-indigo-500/40 hover:scale-105 transition-all duration-300"
+            >
+              Ir para o Dashboard 🚀
+            </button>
           </div>
         )}
       </div>
 
       <style jsx global>{`
         @keyframes fade-in-up {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
+          from { opacity: 0; transform: translateY(30px); filter: blur(4px); }
+          to { opacity: 1; transform: translateY(0); filter: blur(0px); }
         }
         .animate-fade-in-up {
-          animation: fade-in-up 0.4s ease-out forwards;
+          animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         @keyframes fall {
-          to { transform: translateY(100vh) rotate(720deg); }
+          to { transform: translateY(110vh) rotate(720deg); }
         }
         .animate-fall {
           animation: fall linear forwards;
