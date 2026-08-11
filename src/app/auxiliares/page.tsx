@@ -88,96 +88,114 @@ export default function AuxiliaresPage() {
       <div className="dashboard-grid">
         <div className="dashboard-column">
           <div className="card">
-            <h2>Novo Insumo</h2>
-            <form onSubmit={handleAddAuxiliary} className="space-y-4 mt-4">
-              <div className="input-group">
-                <label>Nome do Insumo</label>
-                <input
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Ex: Parafuso M3"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+            <div className="card-header">
+              <h2>Novo Insumo</h2>
+            </div>
+            <div className="card-body">
+              <form onSubmit={handleAddAuxiliary} className="space-y-4 mt-4">
                 <div className="input-group">
-                  <label>Custo Total (R$)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    required
-                    value={cost}
-                    onChange={(e) => setCost(Number(e.target.value))}
-                  />
+                  <label>Nome do Insumo</label>
+                  <div className="input-wrapper">
+                    <input
+                      type="text"
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Ex: Parafuso M3"
+                    />
+                  </div>
                 </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="input-group">
+                    <label>Custo Total (R$)</label>
+                    <div className="input-wrapper">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        required
+                        value={cost}
+                        onChange={(e) => setCost(Number(e.target.value))}
+                      />
+                    </div>
+                  </div>
+                  <div className="input-group">
+                    <label>Tipo de Unidade</label>
+                    <div className="input-wrapper">
+                      <select
+                        value={unit}
+                        onChange={(e) => setUnit(e.target.value)}
+                      >
+                        <option value="unidade">Unidade(s) / Pç</option>
+                        <option value="ml">Mililitros (ml)</option>
+                        <option value="g">Gramas (g)</option>
+                        <option value="cm">Centímetros (cm)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="input-group">
-                  <label>Tipo de Unidade</label>
-                  <select
-                    value={unit}
-                    onChange={(e) => setUnit(e.target.value)}
-                  >
-                    <option value="unidade">Unidade(s) / Pç</option>
-                    <option value="ml">Mililitros (ml)</option>
-                    <option value="g">Gramas (g)</option>
-                    <option value="cm">Centímetros (cm)</option>
-                  </select>
+                  <label>Rendimento (Quantas unidades vêm?)</label>
+                  <div className="input-wrapper">
+                    <input
+                      type="number"
+                      min="1"
+                      step="0.1"
+                      required
+                      value={unitSize}
+                      onChange={(e) => setUnitSize(Number(e.target.value))}
+                      placeholder="Ex: 100 (para um pacote com 100)"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <div className="input-group">
-                <label>Rendimento (Quantas unidades vêm?)</label>
-                <input
-                  type="number"
-                  min="1"
-                  step="0.1"
-                  required
-                  value={unitSize}
-                  onChange={(e) => setUnitSize(Number(e.target.value))}
-                  placeholder="Ex: 100 (para um pacote com 100)"
-                />
-              </div>
-
-              <button type="submit" className="btn-primary w-full flex justify-center items-center gap-2 mt-4">
-                <Plus size={20} />
-                Adicionar Insumo
-              </button>
-            </form>
+                <button type="submit" className="btn btn-primary w-full mt-4">
+                  <Plus size={20} />
+                  Adicionar Insumo
+                </button>
+              </form>
+            </div>
           </div>
         </div>
 
         <div className="dashboard-column">
           <div className="card h-full">
-            <h2>Insumos Cadastrados</h2>
-            
-            {loading ? (
-              <p className="text-[var(--text-muted)] mt-4">Carregando...</p>
-            ) : auxiliaries.length === 0 ? (
-              <p className="text-[var(--text-muted)] mt-4">Nenhum insumo cadastrado.</p>
-            ) : (
-              <div className="mt-4 space-y-3 max-h-[600px] overflow-y-auto pr-2">
-                {auxiliaries.map((a) => {
-                  const unitCost = a.cost / a.unit_size;
-                  return (
-                    <div key={a.id} className="flex items-center justify-between p-3 border border-[var(--border-color)] rounded-md bg-[var(--bg-color)]">
-                      <div className="flex items-center gap-3">
-                        <div>
-                          <div className="font-medium text-[var(--text-color)]">{a.name}</div>
-                          <div className="text-xs text-[var(--text-muted)]">
-                            R$ {a.cost.toFixed(2)} por {a.unit_size} {a.unit} • Custo unitário: R$ {unitCost.toFixed(4)}/{a.unit === 'unidade' ? 'un' : a.unit}
+            <div className="card-header">
+              <h2>Insumos Cadastrados</h2>
+            </div>
+            <div className="card-body">
+              {loading ? (
+                <p className="text-[var(--text-muted)] mt-4">Carregando...</p>
+              ) : auxiliaries.length === 0 ? (
+                <p className="text-[var(--text-muted)] mt-4">Nenhum insumo cadastrado.</p>
+              ) : (
+                <div className="mt-4 space-y-3 max-h-[600px] overflow-y-auto pr-2">
+                  {auxiliaries.map((a) => {
+                    const unitCost = a.cost / a.unit_size;
+                    return (
+                      <div key={a.id} className="flex items-center justify-between p-4 border border-[var(--border-card)] rounded-xl bg-[var(--bg-body)]/50 backdrop-blur-sm">
+                        <div className="flex items-center gap-3">
+                          <div>
+                            <div className="font-bold text-[var(--text-primary)]">{a.name}</div>
+                            <div className="text-sm text-[var(--text-secondary)] mt-1">
+                              R$ {a.cost.toFixed(2)} por {a.unit_size} {a.unit}
+                            </div>
+                            <div className="text-xs text-[var(--text-muted)] mt-1">
+                              Custo unitário: R$ {unitCost.toFixed(4)}/{a.unit === 'unidade' ? 'un' : a.unit}
+                            </div>
                           </div>
                         </div>
+                        <button onClick={() => handleDelete(a.id)} className="text-red-400 hover:text-red-300 p-2 bg-red-400/10 rounded-lg hover:bg-red-400/20 transition-colors">
+                          <Trash2 size={18} />
+                        </button>
                       </div>
-                      <button onClick={() => handleDelete(a.id)} className="text-red-500 hover:text-red-400 p-2">
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
