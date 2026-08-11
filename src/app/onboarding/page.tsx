@@ -569,6 +569,7 @@ export default function OnboardingPage() {
                 <button 
                   onClick={async () => {
                     setLoading(true);
+                    if (!user) return;
                     try {
                       // Se pulou, ao menos garantir que o perfil atualiza
                       const { error: profileError } = await supabase.from('user_profiles')
