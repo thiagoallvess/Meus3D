@@ -14,6 +14,7 @@ export interface CalculatorValues {
   postProcessing: number;
   designCost: number;
   failureRate: number; // percentage
+  piecesPerKit?: number;
   salePrice: number;
   salePriceMarketplace: number;
 }
@@ -76,27 +77,35 @@ export function computeResults(values: CalculatorValues): CalculatorResults {
   // Custo de falha total (adicional devido à taxa de falha)
   const totalFailureCost = totalPrintCost * (failureRate / 100);
 
-  // Custos de produção por unidade (por peça individual)
+  // Custos de produção por unidade (por kit ou peça individual)
   const productionCostPerUnit = (totalPrintCost / quantity) * failureMultiplier;
+
+  // Quantidade de peças por unidade (1 para peça avulsa, N para kits)
+  const piecesPerUnit = values.piecesPerKit || 1;
+  const totalPieces = quantity * piecesPerUnit;
 
   // Custos operacionais e extras totais
   const totalPackagingCost = packagingCost * quantity;
   const totalShippingCost = shippingCost * quantity;
-  const totalPostProcessing = postProcessing * quantity;
-  const totalDesignCost = designCost * quantity;
+  const totalPostProcessing = postProcessing * totalPieces;
+  const totalDesignCost = designCost * totalPieces;
   const totalOtherCosts = otherCosts;
 
+  // Custos operacionais de mão de obra por unidade vendida (kit ou peça)
+  const postProcessingPerUnit = postProcessing * piecesPerUnit;
+  const designCostPerUnit = designCost * piecesPerUnit;
+
   // Custos fixos por unidade (não afetados pela falha)
-  const fixedCostPerUnit = packagingCost + shippingCost + (otherCosts / quantity) + postProcessing + designCost;
+  const fixedCostPerUnit = packagingCost + shippingCost + (otherCosts / quantity) + postProcessingPerUnit + designCostPerUnit;
 
   // Custo de produção puro (sem embalagem e frete - usado para venda direta)
-  const unitCostProduction = productionCostPerUnit + (otherCosts / quantity) + postProcessing + designCost;
+  const unitCostProduction = productionCostPerUnit + (otherCosts / quantity) + postProcessingPerUnit + designCostPerUnit;
   
   // Custo total por unidade (inclui embalagem e frete)
   const unitCost = productionCostPerUnit + fixedCostPerUnit;
 
   // Direto
-  const unitProfitDirect = salePrice - unitCostProduction;
+  const unitProfitDirect = salePrice - unitCost;
   const totalProfitDirect = unitProfitDirect * quantity;
   const profitMarginDirect = salePrice > 0 ? (unitProfitDirect / salePrice) * 100 : 0;
   const totalRevenueDirect = salePrice * quantity;

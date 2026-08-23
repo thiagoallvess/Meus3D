@@ -3,6 +3,8 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useCalculatorData } from "@/lib/useCalculatorData";
 import { computeResults, CalculatorValues } from "@/lib/calculator";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/context/AuthContext";
 import { 
   Package, Box, Trash2,
   DollarSign, Calculator as CalcIcon, 
@@ -11,7 +13,8 @@ import {
 } from "lucide-react";
 
 export default function Calculator({ isKit = false }: { isKit?: boolean }) {
-  const { machines, filaments, auxiliaries, packaging, marketplaces, loading } = useCalculatorData();
+  const { user } = useAuth();
+  const { machines, filaments, auxiliaries, packaging, marketplaces, userDefaults, loading } = useCalculatorData();
   
   const [productName, setProductName] = useState("");
   
@@ -33,7 +36,7 @@ export default function Calculator({ isKit = false }: { isKit?: boolean }) {
   const [machineId, setMachineId] = useState("");
   const [powerWatts, setPowerWatts] = useState<number | "">("");
   const [kwhCost, setKwhCost] = useState<number | "">("");
-  const [machineHourCost, setMachineHourCost] = useState<number | "">(1.7);
+  const [machineHourCost, setMachineHourCost] = useState<number | "">("");
   const [postProcessing, setPostProcessing] = useState<number | "">("");
   const [designCost, setDesignCost] = useState<number | "">("");
   const [failureRate, setFailureRate] = useState<number | "">("");
@@ -45,6 +48,20 @@ export default function Calculator({ isKit = false }: { isKit?: boolean }) {
   // View mode
   const [viewMode, setViewMode] = useState<"unit" | "batch">("unit");
   const [activeMarketplaceId, setActiveMarketplaceId] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    // Small delay ensures the initial render has 0 width, triggering CSS transition
+    const t = setTimeout(() => setMounted(true), 50);
+    // Load failure rate from producao config
+    try {
+      const prodCfg = JSON.parse(localStorage.getItem('meus3d_producao_v3_cfg') || '{}');
+      if (prodCfg.failureRate !== undefined && prodCfg.failureRate > 0) {
+        setFailureRate(prodCfg.failureRate);
+      }
+    } catch (e) {}
+    return () => clearTimeout(t);
+  }, []);
 
   // Auto-fill packaging cost
   useEffect(() => {
@@ -62,11 +79,23 @@ export default function Calculator({ isKit = false }: { isKit?: boolean }) {
       const mac = machines.find(m => m.id === machineId);
       if (mac) {
         setPowerWatts(mac.power_watts);
+        if (mac.kwh_cost > 0) setKwhCost(mac.kwh_cost);
+        if (mac.depreciation_rate > 0) setMachineHourCost(mac.depreciation_rate);
       }
     } else {
       setPowerWatts("");
     }
   }, [machineId, machines]);
+
+  // Auto-fill defaults from user_settings
+  useEffect(() => {
+    if (userDefaults.post_processing > 0 && postProcessing === "") {
+      setPostProcessing(userDefaults.post_processing);
+    }
+    if (userDefaults.design_cost > 0 && designCost === "") {
+      setDesignCost(userDefaults.design_cost);
+    }
+  }, [userDefaults]);
 
   // Handlers for dynamic lists
   const addFilament = () => {
@@ -94,7 +123,7 @@ export default function Calculator({ isKit = false }: { isKit?: boolean }) {
   };
 
   // Calculate results
-  const results = useMemo(() => {
+  const values = useMemo<CalculatorValues>(() => {
     const totalWeight = activeFilaments.reduce((acc, f) => acc + (Number(f.weight) || 0), 0);
     
     // Average filament cost per kg based on weights
@@ -119,12 +148,16 @@ export default function Calculator({ isKit = false }: { isKit?: boolean }) {
 
     // Find marketplace fee
     let platformFee = 0;
+    let shippingCost = 0;
     if (activeMarketplaceId) {
       const mkt = marketplaces.find(m => m.id === activeMarketplaceId);
-      if (mkt) platformFee = mkt.fee_percentage;
+      if (mkt) {
+        platformFee = mkt.fee_percentage || 0;
+        shippingCost = mkt.free_shipping_cost || 0;
+      }
     }
 
-    const values: CalculatorValues = {
+    const calcValues: CalculatorValues = {
       weight: totalWeight,
       filamentCostKg: avgFilamentCostKg,
       totalAuxiliaryCost: totalAuxCost,
@@ -133,30 +166,62 @@ export default function Calculator({ isKit = false }: { isKit?: boolean }) {
       kwhCost: Number(kwhCost) || 0,
       quantity: effectiveQuantity,
       packagingCost: Number(packagingCost) || 0,
-      shippingCost: 0,
+      shippingCost: shippingCost,
       platformFee: platformFee,
       otherCosts: Number(otherCosts) || 0,
       machineHourCost: Number(machineHourCost) || 0,
       postProcessing: Number(postProcessing) || 0,
       designCost: Number(designCost) || 0,
       failureRate: Number(failureRate) || 0,
+      piecesPerKit: isKit ? (Number(piecesPerKit) || 1) : 1,
       salePrice: Number(salePrice) || 0,
       salePriceMarketplace: Number(salePriceMarketplace) || 0,
     };
-
-    return computeResults(values);
+    return calcValues;
   }, [
     activeFilaments, activeAuxiliaries, filaments, auxiliaries,
-    printTimeHours, printTimeMinutes, quantity, piecesPerKit,
+    printTimeHours, printTimeMinutes, quantity, piecesPerKit, isKit,
     powerWatts, kwhCost, packagingCost, otherCosts,
     machineHourCost, postProcessing, designCost, failureRate,
     salePrice, salePriceMarketplace, activeMarketplaceId, marketplaces
   ]);
 
+  const results = useMemo(() => computeResults(values), [values]);
+
   const multiplier = viewMode === "unit" ? 1 / (Number(quantity) || 1) : 1;
 
   const formatCurrency = (val: number) => 
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
+
+  const handleSaveProduct = async () => {
+    if (!user) {
+      alert("Você precisa estar logado para salvar produtos.");
+      return;
+    }
+    if (!productName.trim()) {
+      alert("Por favor, digite um nome para o produto.");
+      return;
+    }
+
+    try {
+      const { error } = await supabase.from('products').insert({
+        user_id: user.id,
+        name: productName,
+        type: isKit ? 'kit' : 'single',
+        values: values,
+        results: results,
+        stock: 0
+      });
+
+      if (error) throw error;
+      
+      alert("Produto salvo com sucesso!");
+      setProductName("");
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao salvar produto no banco de dados.");
+    }
+  };
 
   return (
     <>
@@ -210,7 +275,7 @@ export default function Calculator({ isKit = false }: { isKit?: boolean }) {
                       >
                         <option value="">Selecione...</option>
                         {filaments.map(f => (
-                          <option key={f.id} value={f.id}>{f.name} - {f.brand}</option>
+                          <option key={f.id} value={f.id}>{f.name} - {f.brand} (R$ {f.cost_kg.toFixed(2)}/kg)</option>
                         ))}
                       </select>
                     </div>
@@ -596,7 +661,19 @@ export default function Calculator({ isKit = false }: { isKit?: boolean }) {
                 </span>
               </div>
               <div className="input-group">
-                <label htmlFor="salePriceMarketplace">Venda Marketplace (R$)</label>
+                <div className="flex justify-between items-center mb-2">
+                  <label htmlFor="salePriceMarketplace" className="mb-0">Venda Marketplace (R$)</label>
+                  <select 
+                    value={activeMarketplaceId || ""}
+                    onChange={(e) => setActiveMarketplaceId(e.target.value || null)}
+                    className="text-[11px] py-0.5 px-1.5 rounded bg-gray-900/70 border border-gray-600/50 text-gray-100 outline-none"
+                  >
+                    <option value="">Selecione...</option>
+                    {marketplaces.map(m => (
+                      <option key={m.id} value={m.id}>{m.name}</option>
+                    ))}
+                  </select>
+                </div>
                 <div className="input-wrapper">
                   <span className="input-prefix">R$</span>
                   <input 
@@ -624,7 +701,7 @@ export default function Calculator({ isKit = false }: { isKit?: boolean }) {
               <button className="btn btn-accent" title="Exportar PDF">
                 <Download size={18} /> Exportar PDF
               </button>
-              <button className="btn btn-save" title="Salvar produto">
+              <button className="btn btn-save" title="Salvar produto" onClick={handleSaveProduct}>
                 <Save size={18} /> Salvar
               </button>
               <button className="btn" title="Enviar para Produção" style={{ backgroundColor: "var(--accent-purple)", color: "white", border: "none", padding: "var(--space-sm) var(--space-md)" }}>
@@ -703,7 +780,7 @@ export default function Calculator({ isKit = false }: { isKit?: boolean }) {
                     </span>
                   </div>
                   <div className="rv-margin-track">
-                    <div className="rv-margin-fill" style={{ width: `${Math.max(0, Math.min(100, activeMarketplaceId ? results.profitMarginMarketplace : results.profitMarginDirect))}%` }}></div>
+                    <div className="rv-margin-fill" style={{ width: mounted ? `${Math.max(0, Math.min(100, activeMarketplaceId ? results.profitMarginMarketplace : results.profitMarginDirect))}%` : '0%' }}></div>
                   </div>
                   <div className="rv-margin-text">Margem: <strong>{(activeMarketplaceId ? results.profitMarginMarketplace : results.profitMarginDirect).toFixed(1)}%</strong></div>
                 </div>
@@ -713,79 +790,104 @@ export default function Calculator({ isKit = false }: { isKit?: boolean }) {
               <div className="rv-waterfall">
                 <div className="rv-wf-title">Composição dos Custos {viewMode === "unit" ? (isKit ? "(por Kit)" : "(por Peça)") : "(Lote Total)"}</div>
 
-                <div className="rv-bar-row" data-color="indigo">
-                  <span className="rv-bar-name">Filamento</span>
-                  <div className="rv-bar-track"><div className="rv-bar-fill" style={{ width: "100%" }}></div></div>
-                  <span className="rv-bar-val">{formatCurrency(results.filamentCost * multiplier)}</span>
-                </div>
-                
-                <div className="rv-bar-row" data-color="emerald">
-                  <span className="rv-bar-name">Auxiliares</span>
-                  <div className="rv-bar-track"><div className="rv-bar-fill" style={{ width: "100%" }}></div></div>
-                  <span className="rv-bar-val">{formatCurrency(results.auxiliaryCost * multiplier)}</span>
-                </div>
-                
-                <div className="rv-bar-row" data-color="cyan">
-                  <span className="rv-bar-name">Energia</span>
-                  <div className="rv-bar-track"><div className="rv-bar-fill" style={{ width: "100%" }}></div></div>
-                  <span className="rv-bar-val">{formatCurrency(results.energyCost * multiplier)}</span>
-                </div>
-                
-                <div className="rv-bar-row" data-color="purple">
-                  <span className="rv-bar-name">Máquina</span>
-                  <div className="rv-bar-track"><div className="rv-bar-fill" style={{ width: "100%" }}></div></div>
-                  <span className="rv-bar-val">{formatCurrency(results.machineCost * multiplier)}</span>
-                </div>
-                
-                <div className="rv-bar-row" data-color="rose">
-                  <span className="rv-bar-name">Falha</span>
-                  <div className="rv-bar-track"><div className="rv-bar-fill" style={{ width: "100%" }}></div></div>
-                  <span className="rv-bar-val">{formatCurrency(results.totalFailureCost * multiplier)}</span>
-                </div>
-                
-                <div className="rv-bar-row" data-color="amber">
-                  <span className="rv-bar-name">Pós-proc.</span>
-                  <div className="rv-bar-track"><div className="rv-bar-fill" style={{ width: "100%" }}></div></div>
-                  <span className="rv-bar-val">{formatCurrency(results.totalPostProcessing * multiplier)}</span>
-                </div>
-                
-                <div className="rv-bar-row" data-color="orange">
-                  <span className="rv-bar-name">Design</span>
-                  <div className="rv-bar-track"><div className="rv-bar-fill" style={{ width: "100%" }}></div></div>
-                  <span className="rv-bar-val">{formatCurrency(results.totalDesignCost * multiplier)}</span>
-                </div>
-                
-                <div className="rv-bar-row" data-color="teal">
-                  <span className="rv-bar-name">Embalagem</span>
-                  <div className="rv-bar-track"><div className="rv-bar-fill" style={{ width: "100%" }}></div></div>
-                  <span className="rv-bar-val">{formatCurrency(results.totalPackagingCost * multiplier)}</span>
-                </div>
-                
-                <div className="rv-bar-row" data-color="blue">
-                  <span className="rv-bar-name">Frete</span>
-                  <div className="rv-bar-track"><div className="rv-bar-fill" style={{ width: "100%" }}></div></div>
-                  <span className="rv-bar-val">{formatCurrency(results.totalShippingCost * multiplier)}</span>
-                </div>
-                
-                <div className="rv-bar-row" data-color="red">
-                  <span className="rv-bar-name">Plataforma</span>
-                  <div className="rv-bar-track"><div className="rv-bar-fill" style={{ width: "100%" }}></div></div>
-                  <span className="rv-bar-val">{formatCurrency((activeMarketplaceId ? results.totalPlatformFee : 0) * multiplier)}</span>
-                </div>
-                
-                <div className="rv-bar-row" data-color="gray">
-                  <span className="rv-bar-name">Outros</span>
-                  <div className="rv-bar-track"><div className="rv-bar-fill" style={{ width: "100%" }}></div></div>
-                  <span className="rv-bar-val">{formatCurrency(results.totalOtherCosts * multiplier)}</span>
-                </div>
+                {(() => {
+                  const vals = [
+                    results.filamentCost * multiplier,
+                    results.auxiliaryCost * multiplier,
+                    results.energyCost * multiplier,
+                    results.machineCost * multiplier,
+                    results.totalFailureCost * multiplier,
+                    results.totalPostProcessing * multiplier,
+                    results.totalDesignCost * multiplier,
+                    results.totalPackagingCost * multiplier,
+                    results.totalShippingCost * multiplier,
+                    (activeMarketplaceId ? results.totalPlatformFee : 0) * multiplier,
+                    results.totalOtherCosts * multiplier,
+                    (activeMarketplaceId ? results.totalProfitMarketplace : results.totalProfitDirect) * multiplier
+                  ];
+                  const maxVal = Math.max(...vals, 0.1);
 
-                <div className="rv-bar-row rv-bar-profit" data-color="green">
-                  <span className="rv-bar-name"><strong>LUCRO</strong></span>
-                  <div className="rv-bar-track"><div className="rv-bar-fill" style={{ width: "100%" }}></div></div>
-                  <span className="rv-bar-val">
-                    {formatCurrency((activeMarketplaceId ? results.totalProfitMarketplace : results.totalProfitDirect) * multiplier)}
-                  </span>
-                </div>
+                  const totalRev = (activeMarketplaceId ? results.totalRevenueMarketplace : results.totalRevenueDirect) * multiplier;
+                  const getPct = (v: number) => totalRev > 0 ? ((v / totalRev) * 100).toFixed(1) + "%" : "0.0%";
+
+                  return (
+                    <>
+                      <div className="rv-bar-row" data-color="indigo">
+                        <span className="rv-bar-name">Filamento</span>
+                        <div className="rv-bar-track"><div className="rv-bar-fill" style={{ width: mounted ? `${(vals[0] / maxVal) * 100}%` : '0%' }}></div></div>
+                        <span className="rv-bar-val">{formatCurrency(vals[0])} <span style={{ fontSize: '0.85em', opacity: 0.7, marginLeft: 4 }}>({getPct(vals[0])})</span></span>
+                      </div>
+                      
+                      <div className="rv-bar-row" data-color="emerald">
+                        <span className="rv-bar-name">Auxiliares</span>
+                        <div className="rv-bar-track"><div className="rv-bar-fill" style={{ width: mounted ? `${(vals[1] / maxVal) * 100}%` : '0%' }}></div></div>
+                        <span className="rv-bar-val">{formatCurrency(vals[1])} <span style={{ fontSize: '0.85em', opacity: 0.7, marginLeft: 4 }}>({getPct(vals[1])})</span></span>
+                      </div>
+                      
+                      <div className="rv-bar-row" data-color="cyan">
+                        <span className="rv-bar-name">Energia</span>
+                        <div className="rv-bar-track"><div className="rv-bar-fill" style={{ width: mounted ? `${(vals[2] / maxVal) * 100}%` : '0%' }}></div></div>
+                        <span className="rv-bar-val">{formatCurrency(vals[2])} <span style={{ fontSize: '0.85em', opacity: 0.7, marginLeft: 4 }}>({getPct(vals[2])})</span></span>
+                      </div>
+                      
+                      <div className="rv-bar-row" data-color="purple">
+                        <span className="rv-bar-name">Máquina</span>
+                        <div className="rv-bar-track"><div className="rv-bar-fill" style={{ width: mounted ? `${(vals[3] / maxVal) * 100}%` : '0%' }}></div></div>
+                        <span className="rv-bar-val">{formatCurrency(vals[3])} <span style={{ fontSize: '0.85em', opacity: 0.7, marginLeft: 4 }}>({getPct(vals[3])})</span></span>
+                      </div>
+                      
+                      <div className="rv-bar-row" data-color="rose">
+                        <span className="rv-bar-name">Falha</span>
+                        <div className="rv-bar-track"><div className="rv-bar-fill" style={{ width: mounted ? `${(vals[4] / maxVal) * 100}%` : '0%' }}></div></div>
+                        <span className="rv-bar-val">{formatCurrency(vals[4])} <span style={{ fontSize: '0.85em', opacity: 0.7, marginLeft: 4 }}>({getPct(vals[4])})</span></span>
+                      </div>
+                      
+                      <div className="rv-bar-row" data-color="amber">
+                        <span className="rv-bar-name">Pós-proc.</span>
+                        <div className="rv-bar-track"><div className="rv-bar-fill" style={{ width: mounted ? `${(vals[5] / maxVal) * 100}%` : '0%' }}></div></div>
+                        <span className="rv-bar-val">{formatCurrency(vals[5])} <span style={{ fontSize: '0.85em', opacity: 0.7, marginLeft: 4 }}>({getPct(vals[5])})</span></span>
+                      </div>
+                      
+                      <div className="rv-bar-row" data-color="orange">
+                        <span className="rv-bar-name">Design</span>
+                        <div className="rv-bar-track"><div className="rv-bar-fill" style={{ width: mounted ? `${(vals[6] / maxVal) * 100}%` : '0%' }}></div></div>
+                        <span className="rv-bar-val">{formatCurrency(vals[6])} <span style={{ fontSize: '0.85em', opacity: 0.7, marginLeft: 4 }}>({getPct(vals[6])})</span></span>
+                      </div>
+                      
+                      <div className="rv-bar-row" data-color="teal">
+                        <span className="rv-bar-name">Embalagem</span>
+                        <div className="rv-bar-track"><div className="rv-bar-fill" style={{ width: mounted ? `${(vals[7] / maxVal) * 100}%` : '0%' }}></div></div>
+                        <span className="rv-bar-val">{formatCurrency(vals[7])} <span style={{ fontSize: '0.85em', opacity: 0.7, marginLeft: 4 }}>({getPct(vals[7])})</span></span>
+                      </div>
+                      
+                      <div className="rv-bar-row" data-color="blue">
+                        <span className="rv-bar-name">Frete</span>
+                        <div className="rv-bar-track"><div className="rv-bar-fill" style={{ width: mounted ? `${(vals[8] / maxVal) * 100}%` : '0%' }}></div></div>
+                        <span className="rv-bar-val">{formatCurrency(vals[8])} <span style={{ fontSize: '0.85em', opacity: 0.7, marginLeft: 4 }}>({getPct(vals[8])})</span></span>
+                      </div>
+                      
+                      <div className="rv-bar-row" data-color="red">
+                        <span className="rv-bar-name">Plataforma</span>
+                        <div className="rv-bar-track"><div className="rv-bar-fill" style={{ width: mounted ? `${(vals[9] / maxVal) * 100}%` : '0%' }}></div></div>
+                        <span className="rv-bar-val">{formatCurrency(vals[9])} <span style={{ fontSize: '0.85em', opacity: 0.7, marginLeft: 4 }}>({getPct(vals[9])})</span></span>
+                      </div>
+                      
+                      <div className="rv-bar-row" data-color="gray">
+                        <span className="rv-bar-name">Outros</span>
+                        <div className="rv-bar-track"><div className="rv-bar-fill" style={{ width: mounted ? `${(vals[10] / maxVal) * 100}%` : '0%' }}></div></div>
+                        <span className="rv-bar-val">{formatCurrency(vals[10])} <span style={{ fontSize: '0.85em', opacity: 0.7, marginLeft: 4 }}>({getPct(vals[10])})</span></span>
+                      </div>
+
+                      <div className="rv-bar-row rv-bar-profit" data-color="green">
+                        <span className="rv-bar-name"><strong>LUCRO</strong></span>
+                        <div className="rv-bar-track"><div className="rv-bar-fill" style={{ width: `${(Math.max(0, vals[11]) / maxVal) * 100}%` }}></div></div>
+                        <span className="rv-bar-val">
+                          {formatCurrency(vals[11])} <span style={{ fontSize: '0.85em', opacity: 0.7, marginLeft: 4 }}>({getPct(vals[11])})</span>
+                        </span>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           </div>

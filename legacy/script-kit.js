@@ -413,21 +413,29 @@ function computeResults(values) {
     // Custo de falha total (adicional devido à taxa de falha)
     const totalFailureCost = totalPrintCost * (failureRate / 100);
 
-    // Custos de produção por unidade (por peça individual)
+    // Custos de produção por unidade (por kit)
     const productionCostPerUnit = (totalPrintCost / quantity) * failureMultiplier;
+
+    // Quantidade de peças por unidade (1 para peça avulsa, N para kits)
+    const piecesPerUnit = values.piecesPerKit || 1;
+    const totalPieces = quantity * piecesPerUnit;
 
     // Custos operacionais e extras totais
     const totalPackagingCost = packagingCost * quantity;
     const totalShippingCost = shippingCost * quantity;
-    const totalPostProcessing = postProcessing * quantity;
-    const totalDesignCost = designCost * quantity;
+    const totalPostProcessing = postProcessing * totalPieces;
+    const totalDesignCost = designCost * totalPieces;
     const totalOtherCosts = otherCosts;
 
+    // Custos operacionais de mão de obra por kit
+    const postProcessingPerUnit = postProcessing * piecesPerUnit;
+    const designCostPerUnit = designCost * piecesPerUnit;
+
     // Custos fixos por unidade (não afetados pela falha)
-    const fixedCostPerUnit = packagingCost + shippingCost + (otherCosts / quantity) + postProcessing + designCost;
+    const fixedCostPerUnit = packagingCost + shippingCost + (otherCosts / quantity) + postProcessingPerUnit + designCostPerUnit;
 
     // Custo de produção puro (sem embalagem e frete - usado para venda direta)
-    const unitCostProduction = productionCostPerUnit + (otherCosts / quantity) + postProcessing + designCost;
+    const unitCostProduction = productionCostPerUnit + (otherCosts / quantity) + postProcessingPerUnit + designCostPerUnit;
     
     // Custo total por unidade (inclui embalagem e frete)
     const unitCost = productionCostPerUnit + fixedCostPerUnit;

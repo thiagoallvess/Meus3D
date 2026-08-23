@@ -143,14 +143,39 @@ export default function FilamentosPage() {
                   </div>
                   <div className="input-group">
                     <label>Cor (Visual)</label>
-                    <div className="input-wrapper" style={{ padding: 0, overflow: 'hidden' }}>
-                      <input
-                        type="color"
-                        value={colorHex}
-                        onChange={(e) => setColorHex(e.target.value)}
-                        className="w-full h-[42px] cursor-pointer"
-                        style={{ padding: 0, border: 'none', minHeight: '48px' }}
-                      />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ position: 'relative', flexShrink: 0 }}>
+                        <div
+                          style={{
+                            width: '44px', height: '44px', borderRadius: '12px',
+                            backgroundColor: colorHex,
+                            border: '2px solid rgba(99,102,241,0.3)',
+                            boxShadow: `0 0 12px ${colorHex}40`,
+                            cursor: 'pointer',
+                          }}
+                          onClick={() => document.getElementById('color-picker-hidden')?.click()}
+                        />
+                        <input
+                          id="color-picker-hidden"
+                          type="color"
+                          value={colorHex}
+                          onChange={(e) => setColorHex(e.target.value)}
+                          style={{ position: 'absolute', top: 0, left: 0, width: '44px', height: '44px', opacity: 0, cursor: 'pointer' }}
+                        />
+                      </div>
+                      <div className="input-wrapper" style={{ flex: 1 }}>
+                        <input
+                          type="text"
+                          value={colorHex}
+                          onChange={(e) => {
+                            let v = e.target.value;
+                            if (!v.startsWith('#')) v = '#' + v;
+                            setColorHex(v);
+                          }}
+                          placeholder="#ffffff"
+                          style={{ fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.05em' }}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -211,6 +236,7 @@ export default function FilamentosPage() {
                         <div>
                           <div className="font-bold text-[var(--text-primary)]">{f.brand} - {f.material}</div>
                           <div className="text-sm text-[var(--text-secondary)] mt-1">{f.color_name} • {f.weight}g • R$ {f.price.toFixed(2)}</div>
+                          <div className="text-xs text-[var(--text-muted)] mt-1">Custo: R$ {(f.price / f.weight).toFixed(4)}/g</div>
                         </div>
                       </div>
                       <button onClick={() => handleDelete(f.id)} className="text-red-400 hover:text-red-300 p-2 bg-red-400/10 rounded-lg hover:bg-red-400/20 transition-colors">

@@ -22,7 +22,6 @@ export default function MarketplacesPage() {
   // Form states
   const [name, setName] = useState("");
   const [feePercentage, setFeePercentage] = useState<number | "">("");
-  const [fixedFee, setFixedFee] = useState<number | "">("");
   const [freeShippingCost, setFreeShippingCost] = useState<number | "">("");
 
   useEffect(() => {
@@ -54,7 +53,6 @@ export default function MarketplacesPage() {
       user_id: user.id,
       name,
       fee_percentage: Number(feePercentage) || 0,
-      fixed_fee: Number(fixedFee) || 0,
       free_shipping_cost: Number(freeShippingCost) || 0,
     };
 
@@ -67,7 +65,6 @@ export default function MarketplacesPage() {
       // Reset form
       setName("");
       setFeePercentage("");
-      setFixedFee("");
       setFreeShippingCost("");
       fetchMarketplaces();
     }
@@ -108,37 +105,20 @@ export default function MarketplacesPage() {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="input-group">
-                    <label htmlFor="feePercentage">Taxa de Comissão (%)</label>
-                    <div className="input-wrapper">
-                      <input
-                        type="number"
-                        id="feePercentage"
-                        min="0"
-                        max="100"
-                        step="0.1"
-                        required
-                        value={feePercentage}
-                        onChange={(e) => setFeePercentage(e.target.value === "" ? "" : Number(e.target.value))}
-                        placeholder="0"
-                      />
-                    </div>
-                  </div>
-                  <div className="input-group">
-                    <label htmlFor="fixedFee">Taxa Fixa (R$)</label>
-                    <div className="input-wrapper">
-                      <input
-                        type="number"
-                        id="fixedFee"
-                        min="0"
-                        step="0.01"
-                        required
-                        value={fixedFee}
-                        onChange={(e) => setFixedFee(e.target.value === "" ? "" : Number(e.target.value))}
-                        placeholder="0.00"
-                      />
-                    </div>
+                <div className="input-group">
+                  <label htmlFor="feePercentage">Taxa de Comissão (%)</label>
+                  <div className="input-wrapper">
+                    <input
+                      type="number"
+                      id="feePercentage"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      required
+                      value={feePercentage}
+                      onChange={(e) => setFeePercentage(e.target.value === "" ? "" : Number(e.target.value))}
+                      placeholder="0"
+                    />
                   </div>
                 </div>
 
@@ -185,7 +165,7 @@ export default function MarketplacesPage() {
                         <div>
                           <div className="font-bold text-[var(--text-primary)]">{m.name}</div>
                           <div className="text-sm text-[var(--text-secondary)] mt-1">
-                            Comissão: {m.fee_percentage}% • Taxa: R$ {m.fixed_fee.toFixed(2)} • Frete: R$ {m.free_shipping_cost.toFixed(2)}
+                            Comissão: {m.fee_percentage}% • Frete: R$ {m.free_shipping_cost.toFixed(2)}
                           </div>
                         </div>
                       </div>
