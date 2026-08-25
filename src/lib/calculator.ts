@@ -104,15 +104,18 @@ export function computeResults(values: CalculatorValues): CalculatorResults {
   // Custo de produção puro (sem embalagem e frete - usado para venda direta)
   const unitCostProduction = productionCostPerUnit + (otherCosts / quantity) + postProcessingPerUnit + designCostPerUnit;
   
-  // Custo total por unidade (inclui embalagem e frete)
-  const unitCost = productionCostPerUnit + fixedCostPerUnit;
+  // Custo total por unidade base (inclui embalagem e frete)
+  const unitCostBase = productionCostPerUnit + fixedCostPerUnit;
 
   // Consignado
   const unitConsignedCost = salePrice * ((consignedPercentage || 0) / 100);
   const totalConsignedCost = unitConsignedCost * quantity;
+  
+  // Custo total final (incluindo consignado)
+  const unitCost = unitCostBase + unitConsignedCost;
 
   // Direto
-  const unitProfitDirect = salePrice - unitCost - unitConsignedCost;
+  const unitProfitDirect = salePrice - unitCost;
   const totalProfitDirect = unitProfitDirect * quantity;
   const profitMarginDirect = salePrice > 0 ? (unitProfitDirect / salePrice) * 100 : 0;
   const totalRevenueDirect = salePrice * quantity;
