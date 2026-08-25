@@ -277,7 +277,7 @@ function attachEventListeners() {
         DOM.productName, DOM.printTime, DOM.printTimeMinutes, DOM.powerConsumption,
         DOM.kwhCost, DOM.quantity, DOM.piecesPerKit, DOM.packagingCost, DOM.shippingCost,
         DOM.platformFee, DOM.otherCosts, DOM.machineHourCost, DOM.postProcessing,
-        DOM.designCost, DOM.failureRate, DOM.salePrice, DOM.salePriceMarketplace
+        DOM.designCost, DOM.failureRate, document.getElementById('consignedPercentage'), DOM.salePrice, DOM.salePriceMarketplace
     ];
 
     inputs.forEach(input => {
@@ -377,6 +377,7 @@ function getInputValues() {
         postProcessing: parseFloat(DOM.postProcessing.value) || 0,
         designCost: parseFloat(DOM.designCost.value) || 0,
         failureRate: parseFloat(DOM.failureRate.value) || 0,
+        consignedPercentage: document.getElementById('consignedPercentage') ? parseFloat(document.getElementById('consignedPercentage').value) || 0 : 0,
         salePrice: parseFloat(DOM.salePrice.value) || 0,
         salePriceMarketplace: parseFloat(DOM.salePriceMarketplace.value) || 0,
         machineId: DOM.machineIdSelect ? DOM.machineIdSelect.value : '',
@@ -388,7 +389,8 @@ function computeResults(values) {
         weight, filamentCostKg, printTime, powerWatts,
         kwhCost, quantity, packagingCost, shippingCost,
         platformFee, otherCosts, machineHourCost,
-        postProcessing, designCost, failureRate, salePrice, salePriceMarketplace
+        postProcessing, designCost, failureRate, salePrice, salePriceMarketplace,
+        consignedPercentage
     } = values;
 
     // Potência em kW = watts / 1000
@@ -440,8 +442,12 @@ function computeResults(values) {
     // Custo total por unidade (inclui embalagem e frete)
     const unitCost = productionCostPerUnit + fixedCostPerUnit;
 
+    // Consignado
+    const unitConsignedCost = salePrice * ((consignedPercentage || 0) / 100);
+    const totalConsignedCost = unitConsignedCost * quantity;
+
     // Direto
-    const unitProfitDirect = salePrice - unitCostProduction;
+    const unitProfitDirect = salePrice - unitCostProduction - unitConsignedCost;
     const totalProfitDirect = unitProfitDirect * quantity;
     const profitMarginDirect = salePrice > 0 ? (unitProfitDirect / salePrice) * 100 : 0;
     const totalRevenueDirect = salePrice * quantity;
@@ -477,6 +483,7 @@ function computeResults(values) {
         totalDesignCost,
         totalOtherCosts,
         totalFailureCost,
+        totalConsignedCost,
         unitProfitDirect,
         totalProfitDirect,
         profitMarginDirect,
@@ -514,6 +521,8 @@ function updateResultsUI(results) {
     if (DOM.inlinePostProcessing) DOM.inlinePostProcessing.textContent = 'R$ ' + results.totalPostProcessing.toFixed(2).replace('.', ',');
     if (DOM.inlineDesignCost) DOM.inlineDesignCost.textContent = 'R$ ' + results.totalDesignCost.toFixed(2).replace('.', ',');
     if (DOM.inlineFailureCost) DOM.inlineFailureCost.textContent = 'R$ ' + results.totalFailureCost.toFixed(2).replace('.', ',');
+    const inlineConsigned = document.querySelector('[data-result="inlineConsignedCost"]');
+    if (inlineConsigned) inlineConsigned.textContent = 'R$ ' + (results.totalConsignedCost || 0).toFixed(2).replace('.', ',');
     if (DOM.inlineUnitCostProduction) DOM.inlineUnitCostProduction.textContent = 'R$ ' + results.unitCostProduction.toFixed(2).replace('.', ',');
 
     // Preview in sale price inputs

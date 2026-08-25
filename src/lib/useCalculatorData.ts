@@ -101,7 +101,7 @@ export function useCalculatorData() {
     }
 
     fetchData();
-  }, [user]);
+  }, [user?.id]);
 
   return { machines, filaments, auxiliaries, packaging, marketplaces, userDefaults, loading };
 }

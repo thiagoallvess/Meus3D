@@ -40,6 +40,7 @@ export default function Calculator({ isKit = false }: { isKit?: boolean }) {
   const [postProcessing, setPostProcessing] = useState<number | "">("");
   const [designCost, setDesignCost] = useState<number | "">("");
   const [failureRate, setFailureRate] = useState<number | "">("");
+  const [consignedPercentage, setConsignedPercentage] = useState<number | "">("");
   
   // Venda
   const [salePrice, setSalePrice] = useState<number | "">("");
@@ -173,6 +174,7 @@ export default function Calculator({ isKit = false }: { isKit?: boolean }) {
       postProcessing: Number(postProcessing) || 0,
       designCost: Number(designCost) || 0,
       failureRate: Number(failureRate) || 0,
+      consignedPercentage: Number(consignedPercentage) || 0,
       piecesPerKit: isKit ? (Number(piecesPerKit) || 1) : 1,
       salePrice: Number(salePrice) || 0,
       salePriceMarketplace: Number(salePriceMarketplace) || 0,
@@ -182,7 +184,7 @@ export default function Calculator({ isKit = false }: { isKit?: boolean }) {
     activeFilaments, activeAuxiliaries, filaments, auxiliaries,
     printTimeHours, printTimeMinutes, quantity, piecesPerKit, isKit,
     powerWatts, kwhCost, packagingCost, otherCosts,
-    machineHourCost, postProcessing, designCost, failureRate,
+    machineHourCost, postProcessing, designCost, failureRate, consignedPercentage,
     salePrice, salePriceMarketplace, activeMarketplaceId, marketplaces
   ]);
 
@@ -629,6 +631,29 @@ export default function Calculator({ isKit = false }: { isKit?: boolean }) {
                 </span>
               </div>
             </div>
+            <div className="input-row">
+              <div className="input-group">
+                <label htmlFor="consignedPercentage">Consignado (%)</label>
+                <div className="input-wrapper">
+                  <input 
+                    type="number" 
+                    id="consignedPercentage" 
+                    placeholder="0" 
+                    min="0" 
+                    max="100" 
+                    value={consignedPercentage}
+                    onChange={(e) => setConsignedPercentage(e.target.value !== "" ? parseFloat(e.target.value) : "")}
+                  />
+                  <span className="input-suffix">%</span>
+                </div>
+                <span className="input-hint" style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span>comissão parceiro</span>
+                  <span style={{ color: "var(--accent-blue)", fontWeight: 600 }}>
+                    {formatCurrency(results.totalConsignedCost || 0)} total
+                  </span>
+                </span>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -803,6 +828,7 @@ export default function Calculator({ isKit = false }: { isKit?: boolean }) {
                     results.totalShippingCost * multiplier,
                     (activeMarketplaceId ? results.totalPlatformFee : 0) * multiplier,
                     results.totalOtherCosts * multiplier,
+                    (results.totalConsignedCost || 0) * multiplier,
                     (activeMarketplaceId ? results.totalProfitMarketplace : results.totalProfitDirect) * multiplier
                   ];
                   const maxVal = Math.max(...vals, 0.1);
@@ -878,11 +904,17 @@ export default function Calculator({ isKit = false }: { isKit?: boolean }) {
                         <span className="rv-bar-val">{formatCurrency(vals[10])} <span style={{ fontSize: '0.85em', opacity: 0.7, marginLeft: 4 }}>({getPct(vals[10])})</span></span>
                       </div>
 
+                      <div className="rv-bar-row" data-color="pink">
+                        <span className="rv-bar-name">Consignado</span>
+                        <div className="rv-bar-track"><div className="rv-bar-fill" style={{ width: mounted ? `${(vals[11] / maxVal) * 100}%` : '0%' }}></div></div>
+                        <span className="rv-bar-val">{formatCurrency(vals[11])} <span style={{ fontSize: '0.85em', opacity: 0.7, marginLeft: 4 }}>({getPct(vals[11])})</span></span>
+                      </div>
+
                       <div className="rv-bar-row rv-bar-profit" data-color="green">
                         <span className="rv-bar-name"><strong>LUCRO</strong></span>
-                        <div className="rv-bar-track"><div className="rv-bar-fill" style={{ width: `${(Math.max(0, vals[11]) / maxVal) * 100}%` }}></div></div>
+                        <div className="rv-bar-track"><div className="rv-bar-fill" style={{ width: `${(Math.max(0, vals[12]) / maxVal) * 100}%` }}></div></div>
                         <span className="rv-bar-val">
-                          {formatCurrency(vals[11])} <span style={{ fontSize: '0.85em', opacity: 0.7, marginLeft: 4 }}>({getPct(vals[11])})</span>
+                          {formatCurrency(vals[12])} <span style={{ fontSize: '0.85em', opacity: 0.7, marginLeft: 4 }}>({getPct(vals[12])})</span>
                         </span>
                       </div>
                     </>

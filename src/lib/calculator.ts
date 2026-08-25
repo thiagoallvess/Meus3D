@@ -14,6 +14,7 @@ export interface CalculatorValues {
   postProcessing: number;
   designCost: number;
   failureRate: number; // percentage
+  consignedPercentage?: number;
   piecesPerKit?: number;
   salePrice: number;
   salePriceMarketplace: number;
@@ -37,6 +38,7 @@ export interface CalculatorResults {
   totalDesignCost: number;
   totalOtherCosts: number;
   totalFailureCost: number;
+  totalConsignedCost: number;
   unitProfitDirect: number;
   totalProfitDirect: number;
   profitMarginDirect: number;
@@ -52,7 +54,8 @@ export function computeResults(values: CalculatorValues): CalculatorResults {
       weight, filamentCostKg, printTime, powerWatts,
       kwhCost, quantity, packagingCost, shippingCost,
       platformFee, otherCosts, machineHourCost,
-      postProcessing, designCost, failureRate, salePrice, salePriceMarketplace
+      postProcessing, designCost, failureRate, salePrice, salePriceMarketplace,
+      consignedPercentage
   } = values;
 
   // Potência em kW = watts / 1000
@@ -104,8 +107,12 @@ export function computeResults(values: CalculatorValues): CalculatorResults {
   // Custo total por unidade (inclui embalagem e frete)
   const unitCost = productionCostPerUnit + fixedCostPerUnit;
 
+  // Consignado
+  const unitConsignedCost = salePrice * ((consignedPercentage || 0) / 100);
+  const totalConsignedCost = unitConsignedCost * quantity;
+
   // Direto
-  const unitProfitDirect = salePrice - unitCost;
+  const unitProfitDirect = salePrice - unitCost - unitConsignedCost;
   const totalProfitDirect = unitProfitDirect * quantity;
   const profitMarginDirect = salePrice > 0 ? (unitProfitDirect / salePrice) * 100 : 0;
   const totalRevenueDirect = salePrice * quantity;
@@ -141,6 +148,7 @@ export function computeResults(values: CalculatorValues): CalculatorResults {
       totalDesignCost,
       totalOtherCosts,
       totalFailureCost,
+      totalConsignedCost,
       unitProfitDirect,
       totalProfitDirect,
       profitMarginDirect,

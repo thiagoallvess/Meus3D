@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const fetchSession = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     const currentUser = session?.user ?? null;
-    setUser(currentUser);
+    setUser((prev) => prev?.id === currentUser?.id ? prev : currentUser);
     
     if (currentUser) {
       await fetchOnboardingStatus(currentUser.id);
@@ -60,14 +60,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      if (currentUser) {
-        setLoading(true);
-        fetchOnboardingStatus(currentUser.id);
-      } else {
-        setOnboardingDone(false);
-        setLoading(false);
-      }
+      
+      setUser((prevUser) => {
+        // Apenas recarrega o status se for um usuário diferente (ex: SIGNED_IN)
+        if (prevUser?.id !== currentUser?.id) {
+          if (currentUser) {
+            setLoading(true);
+            fetchOnboardingStatus(currentUser.id);
+          } else {
+            setOnboardingDone(false);
+            setLoading(false);
+          }
+          return currentUser;
+        }
+        // Se for o mesmo usuário (ex: TOKEN_REFRESHED), mantemos a referência anterior
+        // para não disparar re-renders em todo o app que dependem de [user]
+        return prevUser;
+      });
     });
 
     return () => subscription.unsubscribe();
