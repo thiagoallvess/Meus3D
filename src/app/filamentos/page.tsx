@@ -21,6 +21,11 @@ export default function FilamentosPage() {
   const [filaments, setFilaments] = useState<Filament[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Stock addition state
+  const [stockToAdd, setStockToAdd] = useState<string | null>(null);
+  const [addWeight, setAddWeight] = useState(1000);
+  const [addPrice, setAddPrice] = useState(0);
+
   // Form states
   const [brand, setBrand] = useState("");
   const [material, setMaterial] = useState("PLA");
@@ -85,6 +90,29 @@ export default function FilamentosPage() {
     if (error) {
       alert("Erro ao excluir.");
     } else {
+      fetchFilaments();
+    }
+  };
+
+  const handleAddStock = async (e: React.FormEvent, filament: Filament) => {
+    e.preventDefault();
+    if (!user) return;
+
+    const newWeight = filament.weight + addWeight;
+    const newPrice = filament.price + addPrice;
+
+    const { error } = await supabase
+      .from("filaments")
+      .update({ weight: newWeight, price: newPrice })
+      .eq("id", filament.id);
+
+    if (error) {
+      alert("Erro ao adicionar estoque.");
+      console.error(error);
+    } else {
+      setStockToAdd(null);
+      setAddWeight(1000);
+      setAddPrice(0);
       fetchFilaments();
     }
   };
@@ -230,18 +258,68 @@ export default function FilamentosPage() {
               ) : (
                 <div className="mt-4 space-y-3 max-h-[600px] overflow-y-auto pr-2">
                   {filaments.map((f) => (
-                    <div key={f.id} className="flex items-center justify-between p-4 border border-[var(--border-card)] rounded-xl bg-[var(--bg-body)]/50 backdrop-blur-sm">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full border border-[var(--border-card)] shadow-sm" style={{ backgroundColor: f.color_hex }}></div>
-                        <div>
-                          <div className="font-bold text-[var(--text-primary)]">{f.brand} - {f.material}</div>
-                          <div className="text-sm text-[var(--text-secondary)] mt-1">{f.color_name} • {f.weight}g • R$ {f.price.toFixed(2)}</div>
-                          <div className="text-xs text-[var(--text-muted)] mt-1">Custo: R$ {(f.price / f.weight).toFixed(4)}/g</div>
+                    <div key={f.id} className="flex flex-col p-4 border border-[var(--border-card)] rounded-xl bg-[var(--bg-body)]/50 backdrop-blur-sm">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full border border-[var(--border-card)] shadow-sm" style={{ backgroundColor: f.color_hex }}></div>
+                          <div>
+                            <div className="font-bold text-[var(--text-primary)]">{f.brand} - {f.material}</div>
+                            <div className="text-sm text-[var(--text-secondary)] mt-1">{f.color_name} • {f.weight}g • R$ {f.price.toFixed(2)}</div>
+                            <div className="text-xs text-[var(--text-muted)] mt-1">Custo Médio: R$ {(f.price / f.weight).toFixed(4)}/g</div>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => setStockToAdd(stockToAdd === f.id ? null : f.id)} 
+                            className="text-[var(--accent-blue)] hover:text-blue-300 p-2 bg-[var(--accent-blue)]/10 rounded-lg hover:bg-[var(--accent-blue)]/20 transition-colors"
+                            title="Adicionar Estoque"
+                          >
+                            <Plus size={18} />
+                          </button>
+                          <button onClick={() => handleDelete(f.id)} className="text-red-400 hover:text-red-300 p-2 bg-red-400/10 rounded-lg hover:bg-red-400/20 transition-colors" title="Excluir">
+                            <Trash2 size={18} />
+                          </button>
                         </div>
                       </div>
-                      <button onClick={() => handleDelete(f.id)} className="text-red-400 hover:text-red-300 p-2 bg-red-400/10 rounded-lg hover:bg-red-400/20 transition-colors">
-                        <Trash2 size={18} />
-                      </button>
+                      
+                      {stockToAdd === f.id && (
+                        <form onSubmit={(e) => handleAddStock(e, f)} className="mt-4 pt-4 border-t border-[var(--border-card)]">
+                          <h4 className="text-sm font-bold mb-3 text-[var(--text-primary)]">Nova Entrada de Estoque</h4>
+                          <div className="grid grid-cols-2 gap-3 mb-3">
+                            <div className="input-group mb-0">
+                              <label className="text-xs">Peso adicional (g)</label>
+                              <div className="input-wrapper">
+                                <input 
+                                  type="number" 
+                                  min="1" 
+                                  value={addWeight} 
+                                  onChange={e => setAddWeight(Number(e.target.value))} 
+                                  required 
+                                  style={{ padding: '0.4rem 0.75rem', fontSize: '0.875rem' }} 
+                                />
+                              </div>
+                            </div>
+                            <div className="input-group mb-0">
+                              <label className="text-xs">Custo total (R$)</label>
+                              <div className="input-wrapper">
+                                <input 
+                                  type="number" 
+                                  min="0" 
+                                  step="0.01" 
+                                  value={addPrice} 
+                                  onChange={e => setAddPrice(Number(e.target.value))} 
+                                  required 
+                                  style={{ padding: '0.4rem 0.75rem', fontSize: '0.875rem' }} 
+                                />
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-2 justify-end mt-2">
+                            <button type="button" onClick={() => setStockToAdd(null)} className="btn btn-secondary py-1 px-3" style={{ fontSize: '13px', height: 'auto' }}>Cancelar</button>
+                            <button type="submit" className="btn btn-primary py-1 px-3" style={{ fontSize: '13px', height: 'auto' }}>Salvar Entrada</button>
+                          </div>
+                        </form>
+                      )}
                     </div>
                   ))}
                 </div>

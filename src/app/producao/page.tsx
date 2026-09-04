@@ -12,6 +12,7 @@ import { supabase } from '@/lib/supabase';
 interface Product {
   id: string | number;
   name: string;
+  color?: string;
   _type: 'single' | 'kit';
   values: {
     weight?: number;
@@ -470,7 +471,10 @@ export default function ProducaoPage() {
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                          <h3 className="text-base font-bold text-gray-100 truncate">{p.name}</h3>
+                          <h3 className="text-base font-bold text-gray-100 truncate" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '50%', background: p.color || '#25f4f4', flexShrink: 0 }}></span>
+                            {p.name}
+                          </h3>
                           {isKit ? (
                             <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded bg-emerald-500/15 text-emerald-400">Kit com {p.values.piecesPerKit || 1}</span>
                           ) : (

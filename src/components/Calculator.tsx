@@ -17,6 +17,7 @@ export default function Calculator({ isKit = false }: { isKit?: boolean }) {
   const { machines, filaments, auxiliaries, packaging, marketplaces, userDefaults, loading } = useCalculatorData();
   
   const [productName, setProductName] = useState("");
+  const [productColor, setProductColor] = useState("#25f4f4");
   
   // Impressao
   const [printTimeHours, setPrintTimeHours] = useState<number | "">("");
@@ -209,6 +210,7 @@ export default function Calculator({ isKit = false }: { isKit?: boolean }) {
       const { error } = await supabase.from('products').insert({
         user_id: user.id,
         name: productName,
+        color: productColor,
         type: isKit ? 'kit' : 'single',
         values: values,
         results: results,
@@ -228,8 +230,8 @@ export default function Calculator({ isKit = false }: { isKit?: boolean }) {
   return (
     <>
       {/* Product Name */}
-      <div className="product-name-bar">
-        <div className="input-group">
+      <div className="product-name-bar" style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end' }}>
+        <div className="input-group" style={{ flex: 1 }}>
           <label htmlFor="productName">
             <Package size={16} />
             Nome do Produto {isKit ? "(Kit)" : ""}
@@ -241,6 +243,16 @@ export default function Calculator({ isKit = false }: { isKit?: boolean }) {
             value={productName}
             onChange={(e) => setProductName(e.target.value)}
             autoComplete="off" 
+          />
+        </div>
+        <div className="input-group" style={{ width: '80px' }}>
+          <label htmlFor="productColor">Cor</label>
+          <input 
+            type="color" 
+            id="productColor" 
+            value={productColor}
+            onChange={(e) => setProductColor(e.target.value)}
+            style={{ width: '100%', height: '42px', padding: '2px', cursor: 'pointer', background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: '8px' }}
           />
         </div>
       </div>

@@ -38,6 +38,7 @@ interface ProductResult {
 interface Product {
   id: string;
   name: string;
+  color?: string;
   _type: 'single' | 'kit';
   values: ProductValue;
   results?: ProductResult;
@@ -623,7 +624,10 @@ export default function LojaPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                       <span className={`card-tag ${isKit ? 'tag-kit' : 'tag-single'}`}>{isKit ? 'Kit' : 'Peça'}</span>
                     </div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.3 }}>{p.name}</div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.3, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '50%', background: p.color || '#25f4f4', flexShrink: 0 }}></span>
+                      {p.name}
+                    </div>
                     <div className="card-price">R$ {displayPrice.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2})}</div>
                     
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 12px', marginBottom: 12 }}>

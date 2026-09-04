@@ -12,6 +12,7 @@ import {
 interface Product {
   id: string | number;
   name: string;
+  color?: string;
   _type: 'single' | 'kit';
   values: any;
   results: any;
@@ -40,6 +41,7 @@ export default function ProdutosPage() {
   const [kitModalOpen, setKitModalOpen] = useState(false);
   const [kitData, setKitData] = useState<any>({
     name: '',
+    color: '#25f4f4',
     components: [],
     salePrice: '',
     salePriceMkt: '',
@@ -373,6 +375,7 @@ export default function ProdutosPage() {
     const newKit = {
         user_id: user?.id,
         name: kitData.name.trim(),
+        color: kitData.color || '#25f4f4',
         type: 'kit',
         stock: 0,
         values: {
@@ -525,7 +528,10 @@ export default function ProdutosPage() {
         <div key={id} className={cardClass} style={{ borderColor, padding: 0, minWidth: 0 }}>
             {/* Header */}
             <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-light)', lineHeight: 1.3, marginBottom: 8 }}>{p.name}</h3>
+                <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-light)', lineHeight: 1.3, marginBottom: 8, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '50%', background: p.color || '#25f4f4', flexShrink: 0 }}></span>
+                    {p.name}
+                </h3>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                     <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded ${isKit ? 'bg-emerald-500/15 text-emerald-400' : 'bg-indigo-500/15 text-indigo-400'}`}>
                         {isKit ? `Kit com ${p.values.piecesPerKit || 1}` : 'Peça Única'}
@@ -893,14 +899,25 @@ export default function ProdutosPage() {
                     </div>
                     
                     <div className="card-body" style={{ overflowY: 'auto' }}>
-                        <div className="input-group">
-                            <label>Nome do Kit</label>
-                            <div className="input-wrapper">
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end', marginBottom: '1rem' }}>
+                            <div className="input-group" style={{ flex: 1, marginBottom: 0 }}>
+                                <label>Nome do Kit</label>
+                                <div className="input-wrapper">
+                                    <input 
+                                        type="text" 
+                                        placeholder="Ex: Vaso Completo (Base + Topo)"
+                                        value={kitData.name}
+                                        onChange={e => setKitData({...kitData, name: e.target.value})}
+                                    />
+                                </div>
+                            </div>
+                            <div className="input-group" style={{ width: '80px', marginBottom: 0 }}>
+                                <label>Cor</label>
                                 <input 
-                                    type="text" 
-                                    placeholder="Ex: Vaso Completo (Base + Topo)"
-                                    value={kitData.name}
-                                    onChange={e => setKitData({...kitData, name: e.target.value})}
+                                    type="color" 
+                                    value={kitData.color || '#25f4f4'}
+                                    onChange={e => setKitData({...kitData, color: e.target.value})}
+                                    style={{ width: '100%', height: '42px', padding: '2px', cursor: 'pointer', background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: '8px' }}
                                 />
                             </div>
                         </div>
