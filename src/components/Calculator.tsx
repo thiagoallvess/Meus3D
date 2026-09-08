@@ -933,6 +933,60 @@ export default function Calculator({ isKit = false }: { isKit?: boolean }) {
                   );
                 })()}
               </div>
+
+              {/* Estimativa de 24h */}
+              <div className="rv-waterfall" style={{ marginTop: 24 }}>
+                <div className="rv-wf-title">Estimativa de Produção em 24h</div>
+                {(() => {
+                  const batchesPer24h = values.printTime > 0 ? 24 / values.printTime : 0;
+                  const unitsPer24h = batchesPer24h * (Number(quantity) || 1);
+                  
+                  const revenue24hDirect = unitsPer24h * values.salePrice;
+                  const revenue24hMarketplace = unitsPer24h * values.salePriceMarketplace;
+                  
+                  const profit24hDirect = unitsPer24h * results.unitProfitDirect;
+                  const profit24hMarketplace = unitsPer24h * results.unitProfitMarketplace;
+
+                  return (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '12px' }}>
+                      <div className="card" style={{ padding: '16px', background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: '8px' }}>
+                        <h4 style={{ fontSize: '0.9rem', marginBottom: '12px', color: 'var(--text-secondary)' }}>Venda Direta</h4>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <span style={{ fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between' }}>
+                            <span>Produção (Unidades):</span> 
+                            <strong>{Math.floor(unitsPer24h)}</strong>
+                          </span>
+                          <span style={{ fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between' }}>
+                            <span>Faturamento (24h):</span> 
+                            <strong style={{ color: 'var(--accent-blue)' }}>{formatCurrency(revenue24hDirect)}</strong>
+                          </span>
+                          <span style={{ fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between' }}>
+                            <span>Lucro (24h):</span> 
+                            <strong style={{ color: 'var(--accent-green)' }}>{formatCurrency(profit24hDirect)}</strong>
+                          </span>
+                        </div>
+                      </div>
+                      <div className="card" style={{ padding: '16px', background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: '8px' }}>
+                        <h4 style={{ fontSize: '0.9rem', marginBottom: '12px', color: 'var(--text-secondary)' }}>Marketplace</h4>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <span style={{ fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between' }}>
+                            <span>Produção (Unidades):</span> 
+                            <strong>{Math.floor(unitsPer24h)}</strong>
+                          </span>
+                          <span style={{ fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between' }}>
+                            <span>Faturamento (24h):</span> 
+                            <strong style={{ color: 'var(--accent-blue)' }}>{formatCurrency(revenue24hMarketplace)}</strong>
+                          </span>
+                          <span style={{ fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between' }}>
+                            <span>Lucro (24h):</span> 
+                            <strong style={{ color: 'var(--accent-green)' }}>{formatCurrency(profit24hMarketplace)}</strong>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
             </div>
           </div>
         </section>
